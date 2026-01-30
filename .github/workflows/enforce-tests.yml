@@ -4,15 +4,23 @@ on:
   pull_request:
     branches: [ main, staging ]
 
+permissions:
+  pull-requests: read
+  contents: read
+
 jobs:
   test-policy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      - name: Get PR labels
+        run: |
+          echo "PR_LABELS=${{ join(github.event.pull_request.labels.*.name, ',') }}" >> $GITHUB_ENV
+
       - name: Run test update check
-        run: bash scripts/check-tests-updated.sh
+        run: node scripts/check-tests-updated.js
