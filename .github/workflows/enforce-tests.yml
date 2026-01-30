@@ -2,6 +2,7 @@ name: Enforce Test Updates
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
     branches: [ main, staging ]
 
 permissions:
