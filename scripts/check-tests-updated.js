@@ -2,6 +2,7 @@ import { execSync } from "child_process";
 
 const labels = process.env.PR_LABELS?.split(",") || [];
 
+console.log("PR_LABELS:", labels);
 // 1. If label exists → skip check
 if (labels.includes("no-test-needed")) {
   console.log("🟢 no-test-needed label found. Skipping test enforcement.");
