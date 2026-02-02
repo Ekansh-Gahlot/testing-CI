@@ -24,4 +24,4 @@ jobs:
           echo "PR_LABELS=${{ join(github.event.pull_request.labels.*.name, ',') }}" >> $GITHUB_ENV
 
       - name: Run test update check
-        run: node scripts/check-tests-updated.js
+        run: npx ts-node scripts/check-tests-updated.ts
