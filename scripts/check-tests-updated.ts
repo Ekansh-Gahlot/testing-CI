@@ -60,6 +60,7 @@ const CONFIG: Config = {
     "{name}.test.{ext}",    // foo.test.ts
     "{name}.spec.{ext}",    // foo.spec.ts
     "__tests__/{name}.{ext}", // __tests__/foo.ts
+    "tests/{name}.test.{ext}", // tests/foo.test.ts
   ],
   excludePaths: [
     "node_modules/",
