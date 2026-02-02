@@ -95,6 +95,7 @@ interface ChangedFunction {
   functionName: string;
   hasTest: boolean;
   testFile: string | null;
+  testWasUpdated: boolean;
 }
 
 // ============================================================================
@@ -323,11 +324,10 @@ function hasTestForFunction(testFilePath: string, functionName: string): boolean
 // ============================================================================
 
 /**
- * Get changed source files from git diff
+ * Get ALL changed files from git diff (including test files)
  */
-function getChangedSourceFiles(): Array<{ file: string; diff: string }> {
+function getAllChangedFiles(): string[] {
   try {
-    // Get list of changed files (staged + unstaged, vs main/master)
     const diffOutput = execSync("git diff --name-only origin/main...HEAD", {
       encoding: "utf-8",
     })
@@ -335,9 +335,22 @@ function getChangedSourceFiles(): Array<{ file: string; diff: string }> {
       .split("\n")
       .filter(Boolean);
 
+    return diffOutput;
+  } catch (error: any) {
+    console.error("❌ Error getting git changes:", error.message);
+    return [];
+  }
+}
+
+/**
+ * Get changed source files from git diff
+ */
+function getChangedSourceFiles(): Array<{ file: string; diff: string }> {
+  try {
+    const allFiles = getAllChangedFiles();
     const changedFiles: Array<{ file: string; diff: string }> = [];
 
-    for (const file of diffOutput) {
+    for (const file of allFiles) {
       // Skip if not a source file
       const ext = path.extname(file);
       if (!CONFIG.sourceExtensions.includes(ext)) {
@@ -389,9 +402,10 @@ function main() {
     process.exit(0);
   }
 
-  // 2. Get changed source files
+  // 2. Get changed source files and all changed files
   console.log("\n📂 Analyzing changed source files...\n");
   const changedFiles = getChangedSourceFiles();
+  const allChangedFiles = getAllChangedFiles();
 
   if (changedFiles.length === 0) {
     console.log("✅ No source files changed.\n");
@@ -430,6 +444,7 @@ function main() {
           functionName: funcName,
           hasTest: false,
           testFile: null,
+          testWasUpdated: false,
         });
       }
       continue;
@@ -437,17 +452,36 @@ function main() {
 
     console.log(`   🧪 Test file: ${testFile}`);
 
+    // Check if the test file was also modified in this PR
+    const testFileWasUpdated = allChangedFiles.includes(testFile);
+    
+    if (testFileWasUpdated) {
+      console.log(`   📝 Test file was updated in this PR`);
+    } else {
+      console.log(`   ⚠️  Test file was NOT updated in this PR`);
+    }
+
     // Check if each changed function has tests
     for (const funcName of changedFunctionNames) {
       const hasTest = hasTestForFunction(testFile, funcName);
       
-      if (hasTest) {
-        console.log(`   ✅ ${funcName} - has test coverage`);
+      if (hasTest && testFileWasUpdated) {
+        console.log(`   ✅ ${funcName} - has test coverage AND tests were updated`);
         coveredFunctions.push({
           file,
           functionName: funcName,
           hasTest: true,
           testFile,
+          testWasUpdated: true,
+        });
+      } else if (hasTest && !testFileWasUpdated) {
+        console.log(`   ⚠️  ${funcName} - has test coverage but tests were NOT updated`);
+        missingTests.push({
+          file,
+          functionName: funcName,
+          hasTest: true,
+          testFile,
+          testWasUpdated: false,
         });
       } else {
         console.log(`   ❌ ${funcName} - MISSING test coverage`);
@@ -456,6 +490,7 @@ function main() {
           functionName: funcName,
           hasTest: false,
           testFile,
+          testWasUpdated: false,
         });
       }
     }
@@ -473,12 +508,15 @@ function main() {
     }
   }
 
-  console.log(`\n❌ Functions missing test coverage: ${missingTests.length}`);
+  console.log(`\n❌ Functions missing test coverage or outdated tests: ${missingTests.length}`);
   if (missingTests.length > 0) {
     for (const func of missingTests) {
       console.log(`   • ${func.functionName} (${func.file})`);
       if (!func.testFile) {
         console.log(`     → No test file found!`);
+      } else if (func.hasTest && !func.testWasUpdated) {
+        console.log(`     → Test exists but was NOT updated: ${func.testFile}`);
+        console.log(`     → Update the test to reflect the function changes`);
       } else {
         console.log(`     → Add tests to: ${func.testFile}`);
       }
@@ -487,19 +525,31 @@ function main() {
 
   console.log("\n" + "=".repeat(70));
 
-  // 5. Exit with error if any functions are missing tests
+  // 5. Exit with error if any functions are missing tests or tests weren't updated
   if (missingTests.length > 0) {
     console.error("\n❌ TEST ENFORCEMENT FAILED");
-    console.error(`\n${missingTests.length} function(s) were modified but don't have test coverage.`);
+    
+    const noTests = missingTests.filter(f => !f.hasTest);
+    const outdatedTests = missingTests.filter(f => f.hasTest && !f.testWasUpdated);
+    
+    if (noTests.length > 0) {
+      console.error(`\n${noTests.length} function(s) were modified but don't have test coverage.`);
+    }
+    
+    if (outdatedTests.length > 0) {
+      console.error(`\n${outdatedTests.length} function(s) were modified but their tests were NOT updated.`);
+      console.error(`When you modify a function, you must also update its tests to ensure they still validate the new behavior.`);
+    }
+    
     console.error("\nOptions:");
-    console.error(`  1. Add test cases for the missing functions`);
+    console.error(`  1. Add or update test cases for the affected functions`);
     console.error(`  2. Add the "${CONFIG.skipLabel}" label to bypass this check`);
     console.error(`  3. Use CodeGuard to auto-generate tests: npx codeguard auto\n`);
     process.exit(1);
   }
 
   console.log("\n✅ TEST ENFORCEMENT PASSED");
-  console.log(`All ${coveredFunctions.length} modified function(s) have test coverage!\n`);
+  console.log(`All ${coveredFunctions.length} modified function(s) have up-to-date test coverage!\n`);
   process.exit(0);
 }
 
