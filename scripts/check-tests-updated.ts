@@ -405,10 +405,13 @@ function getChangedSourceFiles(): Array<{ file: string; diff: string }> {
       }
 
       // Get the diff for this specific file
+      // -w: ignore all whitespace changes
+      // --ignore-blank-lines: ignore changes that just insert or delete blank lines
       try {
-        const diff = execSync(`git diff origin/main...HEAD -- "${file}"`, {
-          encoding: "utf-8",
-        });
+        const diff = execSync(
+          `git diff origin/main...HEAD -w --ignore-blank-lines -- "${file}"`,
+          { encoding: "utf-8" }
+        );
         
         changedFiles.push({ file, diff });
       } catch (error) {
