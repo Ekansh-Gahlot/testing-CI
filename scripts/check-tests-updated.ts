@@ -96,6 +96,8 @@ interface ChangedFunction {
   hasTest: boolean;
   testFile: string | null;
   testWasUpdated: boolean;
+  sourceModifiedTime?: Date;
+  testModifiedTime?: Date;
 }
 
 // ============================================================================
@@ -324,6 +326,41 @@ function hasTestForFunction(testFilePath: string, functionName: string): boolean
 // ============================================================================
 
 /**
+ * Get the last modification timestamp of a file from git history
+ */
+function getLastModifiedTime(filePath: string): Date | null {
+  try {
+    const timestamp = execSync(`git log -1 --format=%ct -- "${filePath}"`, {
+      encoding: "utf-8",
+    }).trim();
+    
+    if (!timestamp) {
+      return null;
+    }
+    
+    return new Date(parseInt(timestamp) * 1000);
+  } catch (error) {
+    return null;
+  }
+}
+
+/**
+ * Format time difference in human-readable format
+ */
+function formatTimeDiff(newer: Date, older: Date): string {
+  const diffMs = newer.getTime() - older.getTime();
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHour = Math.floor(diffMin / 60);
+  const diffDay = Math.floor(diffHour / 24);
+  
+  if (diffDay > 0) return `${diffDay} day${diffDay > 1 ? 's' : ''}`;
+  if (diffHour > 0) return `${diffHour} hour${diffHour > 1 ? 's' : ''}`;
+  if (diffMin > 0) return `${diffMin} minute${diffMin > 1 ? 's' : ''}`;
+  return `${diffSec} second${diffSec > 1 ? 's' : ''}`;
+}
+
+/**
  * Get ALL changed files from git diff (including test files)
  */
 function getAllChangedFiles(): string[] {
@@ -452,36 +489,55 @@ function main() {
 
     console.log(`   🧪 Test file: ${testFile}`);
 
-    // Check if the test file was also modified in this PR
-    const testFileWasUpdated = allChangedFiles.includes(testFile);
-    
-    if (testFileWasUpdated) {
-      console.log(`   📝 Test file was updated in this PR`);
+    // Get last modification timestamps
+    const sourceModifiedTime = getLastModifiedTime(file);
+    const testModifiedTime = getLastModifiedTime(testFile);
+
+    if (!sourceModifiedTime || !testModifiedTime) {
+      console.log(`   ⚠️  Could not determine modification times`);
     } else {
-      console.log(`   ⚠️  Test file was NOT updated in this PR`);
+      console.log(`   📅 Source last modified: ${sourceModifiedTime.toISOString()}`);
+      console.log(`   📅 Test last modified:   ${testModifiedTime.toISOString()}`);
+      
+      if (sourceModifiedTime > testModifiedTime) {
+        console.log(`   ⚠️  Source was modified AFTER the test file (${formatTimeDiff(sourceModifiedTime, testModifiedTime)} newer)`);
+      } else if (sourceModifiedTime.getTime() === testModifiedTime.getTime()) {
+        console.log(`   ✅ Source and test modified at the same time`);
+      } else {
+        console.log(`   ✅ Test is up-to-date (modified after source)`);
+      }
     }
 
     // Check if each changed function has tests
     for (const funcName of changedFunctionNames) {
       const hasTest = hasTestForFunction(testFile, funcName);
       
-      if (hasTest && testFileWasUpdated) {
-        console.log(`   ✅ ${funcName} - has test coverage AND tests were updated`);
+      // Determine if test is up-to-date based on timestamps
+      const testIsUpToDate = testModifiedTime && sourceModifiedTime 
+        ? testModifiedTime >= sourceModifiedTime 
+        : false;
+      
+      if (hasTest && testIsUpToDate) {
+        console.log(`   ✅ ${funcName} - has test coverage AND tests are up-to-date`);
         coveredFunctions.push({
           file,
           functionName: funcName,
           hasTest: true,
           testFile,
           testWasUpdated: true,
+          sourceModifiedTime: sourceModifiedTime || undefined,
+          testModifiedTime: testModifiedTime || undefined,
         });
-      } else if (hasTest && !testFileWasUpdated) {
-        console.log(`   ⚠️  ${funcName} - has test coverage but tests were NOT updated`);
+      } else if (hasTest && !testIsUpToDate) {
+        console.log(`   ⚠️  ${funcName} - has test coverage but tests are OUTDATED`);
         missingTests.push({
           file,
           functionName: funcName,
           hasTest: true,
           testFile,
           testWasUpdated: false,
+          sourceModifiedTime: sourceModifiedTime || undefined,
+          testModifiedTime: testModifiedTime || undefined,
         });
       } else {
         console.log(`   ❌ ${funcName} - MISSING test coverage`);
@@ -491,6 +547,8 @@ function main() {
           hasTest: false,
           testFile,
           testWasUpdated: false,
+          sourceModifiedTime: sourceModifiedTime || undefined,
+          testModifiedTime: testModifiedTime || undefined,
         });
       }
     }
@@ -515,7 +573,12 @@ function main() {
       if (!func.testFile) {
         console.log(`     → No test file found!`);
       } else if (func.hasTest && !func.testWasUpdated) {
-        console.log(`     → Test exists but was NOT updated: ${func.testFile}`);
+        console.log(`     → Test exists but is OUTDATED: ${func.testFile}`);
+        if (func.sourceModifiedTime && func.testModifiedTime) {
+          console.log(`     → Source modified: ${func.sourceModifiedTime.toISOString()}`);
+          console.log(`     → Test modified:   ${func.testModifiedTime.toISOString()}`);
+          console.log(`     → Test is ${formatTimeDiff(func.sourceModifiedTime, func.testModifiedTime)} older than source`);
+        }
         console.log(`     → Update the test to reflect the function changes`);
       } else {
         console.log(`     → Add tests to: ${func.testFile}`);
@@ -537,8 +600,9 @@ function main() {
     }
     
     if (outdatedTests.length > 0) {
-      console.error(`\n${outdatedTests.length} function(s) were modified but their tests were NOT updated.`);
-      console.error(`When you modify a function, you must also update its tests to ensure they still validate the new behavior.`);
+      console.error(`\n${outdatedTests.length} function(s) were modified but their tests are OUTDATED.`);
+      console.error(`The source files were modified more recently than their test files.`);
+      console.error(`When you modify a function, you must also update its tests to ensure they validate the new behavior.`);
     }
     
     console.error("\nOptions:");
