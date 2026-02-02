@@ -566,22 +566,18 @@ function main() {
     }
   }
 
-  console.log(`\n❌ Functions missing test coverage or outdated tests: ${missingTests.length}`);
+  console.log(`\n❌ Functions requiring test updates: ${missingTests.length}`);
   if (missingTests.length > 0) {
     for (const func of missingTests) {
       console.log(`   • ${func.functionName} (${func.file})`);
       if (!func.testFile) {
-        console.log(`     → No test file found!`);
+        console.log(`     → No test file found - please create: ${func.file.replace(/\.(ts|js|tsx|jsx)$/, '.test.$1')}`);
       } else if (func.hasTest && !func.testWasUpdated) {
-        console.log(`     → Test exists but is OUTDATED: ${func.testFile}`);
-        if (func.sourceModifiedTime && func.testModifiedTime) {
-          console.log(`     → Source modified: ${func.sourceModifiedTime.toISOString()}`);
-          console.log(`     → Test modified:   ${func.testModifiedTime.toISOString()}`);
-          console.log(`     → Test is ${formatTimeDiff(func.sourceModifiedTime, func.testModifiedTime)} older than source`);
-        }
-        console.log(`     → Update the test to reflect the function changes`);
+        console.log(`     → Test file: ${func.testFile}`);
+        console.log(`     → Action needed: Update test cases to match the function changes`);
       } else {
-        console.log(`     → Add tests to: ${func.testFile}`);
+        console.log(`     → Test file: ${func.testFile}`);
+        console.log(`     → Action needed: Add test coverage for this function`);
       }
     }
   }
@@ -591,24 +587,46 @@ function main() {
   // 5. Exit with error if any functions are missing tests or tests weren't updated
   if (missingTests.length > 0) {
     console.error("\n❌ TEST ENFORCEMENT FAILED");
+    console.error("\nTest cases are not up-to-date. Please update the test cases.");
     
     const noTests = missingTests.filter(f => !f.hasTest);
     const outdatedTests = missingTests.filter(f => f.hasTest && !f.testWasUpdated);
     
+    // List all changed functions in this branch
+    const allChangedFunctions = [...coveredFunctions, ...missingTests]
+      .map(f => f.functionName)
+      .filter((name, index, self) => self.indexOf(name) === index); // unique
+    
+    console.error(`\nThe following functions were changed in this branch (compared to main):`);
+    for (const funcName of allChangedFunctions) {
+      const func = [...coveredFunctions, ...missingTests].find(f => f.functionName === funcName);
+      if (func) {
+        const status = coveredFunctions.some(f => f.functionName === funcName) ? "✅" : "❌";
+        console.error(`  ${status} ${funcName} (${func.file})`);
+      }
+    }
+    
     if (noTests.length > 0) {
-      console.error(`\n${noTests.length} function(s) were modified but don't have test coverage.`);
+      console.error(`\n${noTests.length} function(s) missing test coverage:`);
+      for (const func of noTests) {
+        console.error(`  • ${func.functionName}`);
+      }
     }
     
     if (outdatedTests.length > 0) {
-      console.error(`\n${outdatedTests.length} function(s) were modified but their tests are OUTDATED.`);
-      console.error(`The source files were modified more recently than their test files.`);
-      console.error(`When you modify a function, you must also update its tests to ensure they validate the new behavior.`);
+      console.error(`\n${outdatedTests.length} function(s) with outdated tests:`);
+      for (const func of outdatedTests) {
+        console.error(`  • ${func.functionName}`);
+      }
     }
     
-    console.error("\nOptions:");
-    console.error(`  1. Add or update test cases for the affected functions`);
-    console.error(`  2. Add the "${CONFIG.skipLabel}" label to bypass this check`);
-    console.error(`  3. Use CodeGuard to auto-generate tests: npx codeguard auto\n`);
+    console.error("\n📋 Action Required:");
+    console.error(`  Update test cases for the functions listed above to ensure they validate the current behavior.`);
+    
+    console.error("\n🔧 Options:");
+    console.error(`  1. Manually add or update test cases for the affected functions`);
+    console.error(`  2. Use CodeGuard to auto-generate tests: npx codeguard auto`);
+    console.error(`  3. Add the "${CONFIG.skipLabel}" label to bypass this check (use sparingly)\n`);
     process.exit(1);
   }
 
