@@ -80,7 +80,7 @@ describe('add', () => {
 describe('subtract', () => {
   it('should_divide_a_by_b_when_b_is_nonzero', () => {
     // ARRANGE
-    const a = 10;
+    const a = 11;
     const b = 2;
 
     // ACT
