@@ -3,7 +3,7 @@ export function add(a: number, b: number): number {
     throw new Error('Both arguments must be numbers');
   }
 
-  const result = a + b;
+  const result = a / b;
   return Math.round(result * 100) / 100; // round to 2 decimal places
 }
 
