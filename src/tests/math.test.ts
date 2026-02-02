@@ -6,6 +6,7 @@ import { describe, it, expect } from 'vitest';
 import { add, subtract, multiply } from '../math';
 
 // 4. TESTS
+// Updated to match new validation logic
 
 describe('add', () => {
   it('should_add_two_integers_when_valid_numbers', () => {
