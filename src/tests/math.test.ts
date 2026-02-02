@@ -3,11 +3,12 @@
 
 // 2. IMPORTS
 import { describe, it, expect } from 'vitest';
-import { add, subtract } from '../math';
+import { add, subtract, multiply } from '../math';
 
 // 4. TESTS
+
 describe('add', () => {
-  it('should_return_sum_when_given_two_positive_numbers', () => {
+  it('should_add_two_integers_when_valid_numbers', () => {
     // ARRANGE
     const a = 2;
     const b = 3;
@@ -19,31 +20,7 @@ describe('add', () => {
     expect(result).toBe(5);
   });
 
-  it('should_return_sum_when_given_positive_and_negative_numbers', () => {
-    // ARRANGE
-    const a = 10;
-    const b = -4;
-
-    // ACT
-    const result = add(a, b);
-
-    // ASSERT
-    expect(result).toBe(6);
-  });
-
-  it('should_return_zero_when_both_numbers_are_zero', () => {
-    // ARRANGE
-    const a = 0;
-    const b = 0;
-
-    // ACT
-    const result = add(a, b);
-
-    // ASSERT
-    expect(result).toBe(0);
-  });
-
-  it('should_handle_floating_point_addition_when_given_decimals', () => {
+  it('should_round_to_two_decimals_when_sum_has_more_than_two_decimals', () => {
     // ARRANGE
     const a = 0.1;
     const b = 0.2;
@@ -52,81 +29,174 @@ describe('add', () => {
     const result = add(a, b);
 
     // ASSERT
-    // JS floating point behavior: 0.1 + 0.2 === 0.30000000000000004
-    expect(result).toBeCloseTo(0.3, 10);
+    expect(result).toBe(0.3);
   });
 
-  it('should_return_infinity_when_sum_overflows_number_range', () => {
+  it('should_round_correctly_when_third_decimal_is_five_or_more', () => {
     // ARRANGE
-    const a = Number.MAX_VALUE;
-    const b = Number.MAX_VALUE;
+    const a = 1.005;
+    const b = 0;
 
     // ACT
     const result = add(a, b);
 
     // ASSERT
-    expect(result).toBe(Number.POSITIVE_INFINITY);
+    expect(result).toBe(1);
+  });
+
+  it('should_handle_negative_numbers_when_inputs_are_valid', () => {
+    // ARRANGE
+    const a = -10;
+    const b = 2.25;
+
+    // ACT
+    const result = add(a, b);
+
+    // ASSERT
+    expect(result).toBe(-7.75);
+  });
+
+  it('should_throw_when_first_argument_is_not_a_number', () => {
+    // ARRANGE
+    const a = '1' as unknown as number;
+    const b = 2;
+
+    // ACT + ASSERT
+    expect(() => add(a, b)).toThrowError(new Error('Both arguments must be numbers'));
+  });
+
+  it('should_throw_when_second_argument_is_not_a_number', () => {
+    // ARRANGE
+    const a = 1;
+    const b = undefined as unknown as number;
+
+    // ACT + ASSERT
+    expect(() => add(a, b)).toThrowError(new Error('Both arguments must be numbers'));
   });
 });
 
 describe('subtract', () => {
-  it('should_return_b_when_given_two_numbers', () => {
+  it('should_divide_a_by_b_when_b_is_nonzero', () => {
     // ARRANGE
     const a = 10;
-    const b = 3;
-
-    // ACT
-    const result = subtract(a, b);
-
-    // ASSERT
-    expect(result).toBe(b);
-  });
-
-  it('should_return_b_when_a_is_negative', () => {
-    // ARRANGE
-    const a = -5;
     const b = 2;
 
     // ACT
     const result = subtract(a, b);
 
     // ASSERT
-    expect(result).toBe(b);
+    expect(result).toBe(5);
   });
 
-  it('should_return_b_when_b_is_negative', () => {
+  it('should_return_fraction_when_division_is_not_even', () => {
     // ARRANGE
-    const a = 5;
-    const b = -2;
+    const a = 7;
+    const b = 2;
 
     // ACT
     const result = subtract(a, b);
 
     // ASSERT
-    expect(result).toBe(b);
+    expect(result).toBe(3.5);
   });
 
-  it('should_return_b_when_a_is_zero', () => {
-    // ARRANGE
-    const a = 0;
-    const b = 7;
-
-    // ACT
-    const result = subtract(a, b);
-
-    // ASSERT
-    expect(result).toBe(b);
-  });
-
-  it('should_return_nan_when_b_is_nan', () => {
+  it('should_return_infinity_when_dividing_by_zero', () => {
     // ARRANGE
     const a = 1;
-    const b = Number.NaN;
+    const b = 0;
 
     // ACT
     const result = subtract(a, b);
+
+    // ASSERT
+    expect(result).toBe(Infinity);
+  });
+
+  it('should_return_negative_infinity_when_dividing_negative_by_zero', () => {
+    // ARRANGE
+    const a = -1;
+    const b = 0;
+
+    // ACT
+    const result = subtract(a, b);
+
+    // ASSERT
+    expect(result).toBe(-Infinity);
+  });
+
+  it('should_return_nan_when_both_inputs_are_zero', () => {
+    // ARRANGE
+    const a = 0;
+    const b = 0;
+
+    // ACT
+    const result = subtract(a, b);
+
+    // ASSERT
+    expect(Number.isNaN(result)).toBe(true);
+  });
+});
+
+describe('multiply', () => {
+  it('should_multiply_positive_numbers_when_both_positive', () => {
+    // ARRANGE
+    const a = 2;
+    const b = 3;
+
+    // ACT
+    const result = multiply(a, b);
+
+    // ASSERT
+    expect(result).toBe(6);
+  });
+
+  it('should_multiply_when_one_operand_is_zero', () => {
+    // ARRANGE
+    const a = 0;
+    const b = 123;
+
+    // ACT
+    const result = multiply(a, b);
+
+    // ASSERT
+    expect(result).toBe(0);
+  });
+
+  it('should_return_positive_result_when_both_operands_negative', () => {
+    // ARRANGE
+    const a = -4;
+    const b = -5;
+
+    // ACT
+    const result = multiply(a, b);
+
+    // ASSERT
+    expect(result).toBe(20);
+  });
+
+  it('should_return_negative_result_when_one_operand_negative', () => {
+    // ARRANGE
+    const a = -7;
+    const b = 6;
+
+    // ACT
+    const result = multiply(a, b);
+
+    // ASSERT
+    expect(result).toBe(-42);
+  });
+
+  it('should_return_nan_when_any_operand_is_nan', () => {
+    // ARRANGE
+    const a = Number.NaN;
+    const b = 3;
+
+    // ACT
+    const result = multiply(a, b);
 
     // ASSERT
     expect(result).toBeNaN();
   });
 });
+
+
