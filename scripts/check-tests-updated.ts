@@ -606,20 +606,6 @@ function main() {
       }
     }
     
-    if (noTests.length > 0) {
-      console.error(`\n${noTests.length} function(s) missing test coverage:`);
-      for (const func of noTests) {
-        console.error(`  • ${func.functionName}`);
-      }
-    }
-    
-    if (outdatedTests.length > 0) {
-      console.error(`\n${outdatedTests.length} function(s) with outdated tests:`);
-      for (const func of outdatedTests) {
-        console.error(`  • ${func.functionName}`);
-      }
-    }
-    
     console.error("\n📋 Action Required:");
     console.error(`  Update test cases for the functions listed above to ensure they validate the current behavior.`);
     
