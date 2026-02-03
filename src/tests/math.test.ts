@@ -83,66 +83,67 @@ describe('add', () => {
 
 
 describe('subtract', () => {
-  it('should_divide_a_by_b_when_b_is_nonzero', () => {
+  it('should_return_difference_when_b_is_less_than_a', () => {
     // ARRANGE
     const a = 10;
-    const b = 2;
+    const b = 3;
 
     // ACT
     const result = subtract(a, b);
 
     // ASSERT
-    expect(result).toBe(5);
+    expect(result).toBe(7);
   });
 
-  it('should_return_fraction_when_division_is_not_even', () => {
+  it('should_return_negative_when_b_is_greater_than_a', () => {
     // ARRANGE
-    const a = 7;
-    const b = 2;
+    const a = 3;
+    const b = 10;
 
     // ACT
     const result = subtract(a, b);
 
     // ASSERT
-    expect(result).toBe(3.5);
+    expect(result).toBe(-7);
   });
 
-  it('should_return_infinity_when_dividing_by_zero', () => {
+  it('should_return_same_value_when_subtracting_zero', () => {
     // ARRANGE
-    const a = 1;
+    const a = 42;
     const b = 0;
 
     // ACT
     const result = subtract(a, b);
 
     // ASSERT
-    expect(result).toBe(Infinity);
+    expect(result).toBe(42);
   });
 
-  it('should_return_negative_infinity_when_dividing_negative_by_zero', () => {
+  it('should_return_zero_when_a_and_b_are_equal', () => {
     // ARRANGE
-    const a = -1;
-    const b = 0;
+    const a = 5;
+    const b = 5;
 
     // ACT
     const result = subtract(a, b);
 
     // ASSERT
-    expect(result).toBe(-Infinity);
+    expect(result).toBe(0);
   });
 
-  it('should_return_nan_when_both_inputs_are_zero', () => {
+  it('should_handle_decimal_numbers_when_inputs_are_floats', () => {
     // ARRANGE
-    const a = 0;
-    const b = 0;
+    const a = 0.3;
+    const b = 0.2;
 
     // ACT
     const result = subtract(a, b);
 
     // ASSERT
-    expect(Number.isNaN(result)).toBe(true);
+    expect(result).toBeCloseTo(0.1, 10);
   });
 });
+
 
 describe('multiply', () => {
   it('should_multiply_positive_numbers_when_both_positive', () => {
