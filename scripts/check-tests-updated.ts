@@ -841,7 +841,7 @@ function main() {
     console.error("\n🛠️  Options:");
     console.error(`   1. Fix the issues listed above`);
     console.error(`   2. Add the "${CONFIG.skipLabel}" label to bypass this check`);
-    console.error(`   3. Use CodeGuard to auto-generate tests: npx codeguard auto\n`);
+    console.error(`   3. Use CodeGuard/AI to generate tests\n`);
     
     process.exit(1);
   }
