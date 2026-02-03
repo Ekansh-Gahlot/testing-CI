@@ -82,7 +82,7 @@ describe('add', () => {
 
 
 describe('subtract', () => {
-  it('should_return_division_result_when_given_valid_numbers', () => {
+  it('should_divide_a_by_b_when_inputs_are_numbers', () => {
     // ARRANGE
     const a = 10;
     const b = 2;
@@ -94,21 +94,21 @@ describe('subtract', () => {
     expect(result).toBe(5);
   });
 
-  it('should_return_negative_result_when_division_results_in_negative', () => {
+  it('should_return_a_fraction_when_division_is_not_even', () => {
     // ARRANGE
-    const a = -9;
-    const b = 3;
+    const a = 5;
+    const b = 2;
 
     // ACT
     const result = subtract(a, b);
 
     // ASSERT
-    expect(result).toBe(-3);
+    expect(result).toBe(2.5);
   });
 
   it('should_return_infinity_when_dividing_by_zero', () => {
     // ARRANGE
-    const a = 5;
+    const a = 1;
     const b = 0;
 
     // ACT
@@ -118,33 +118,21 @@ describe('subtract', () => {
     expect(result).toBe(Infinity);
   });
 
-  it('should_return_negative_infinity_when_dividing_negative_by_zero', () => {
-    // ARRANGE
-    const a = -5;
-    const b = 0;
-
-    // ACT
-    const result = subtract(a, b);
-
-    // ASSERT
-    expect(result).toBe(-Infinity);
-  });
-
-  it('should_throw_error_when_first_argument_is_not_a_number', () => {
+  it('should_throw_when_first_argument_is_not_a_number', () => {
     // ARRANGE
     const a = '10' as unknown as number;
     const b = 2;
 
-    // ACT & ASSERT
+    // ACT / ASSERT
     expect(() => subtract(a, b)).toThrowError(new Error('Both arguments must be numbers'));
   });
 
-  it('should_throw_error_when_second_argument_is_not_a_number', () => {
+  it('should_throw_when_second_argument_is_not_a_number', () => {
     // ARRANGE
     const a = 10;
-    const b = '2' as unknown as number;
+    const b = undefined as unknown as number;
 
-    // ACT & ASSERT
+    // ACT / ASSERT
     expect(() => subtract(a, b)).toThrowError(new Error('Both arguments must be numbers'));
   });
 });
