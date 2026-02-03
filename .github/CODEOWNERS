@@ -1,5 +1,7 @@
 # Protect CI enforcement script
-scripts/check-tests-updated.js   @Ekansh-Gahlot
+scripts/check-tests-updated.ts   @Ekansh-Gahlot
 
 # Protect GitHub Actions workflows
 .github/workflows/*             @Ekansh-Gahlot
+
+vitest.config.ts @Ekansh-Gahlot
