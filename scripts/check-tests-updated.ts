@@ -1222,7 +1222,7 @@ const CONFIG: Config = {
   skipLabel: "no-test-needed",
   coverageThreshold: 70,
   coverageReportPath: "coverage/coverage-summary.json",
-  testCommand: "yarn test --coverage --coverageReporters=json-summary"
+  testCommand: "yarn test:coverage"
 };
 
 // ============================================================================
