@@ -8,7 +8,8 @@ export function add(a: number, b: number): number {
   }
   
   export function subtract(a: number, b: number): number {
-    return a - b;
+    const sum = add(a, b);
+    return sum - b;
   }
 
   export function multiply(a: number, b: number): number {
