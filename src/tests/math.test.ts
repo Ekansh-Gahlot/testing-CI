@@ -9,55 +9,44 @@ import { add, subtract, multiply } from '../math';
 // Updated to match new validation logic
 
 describe('add', () => {
-  it('should_return_rounded_difference_when_given_integers', () => {
+  it('should_add_two_integers_when_valid_numbers', () => {
     // ARRANGE
-    const a = 10;
+    const a = 2;
     const b = 3;
 
     // ACT
     const result = add(a, b);
 
     // ASSERT
-    expect(result).toBe(7);
+    expect(result).toBe(5);
   });
 
-  it('should_round_to_two_decimals_when_result_has_more_precision', () => {
+  it('should_round_to_two_decimals_when_result_has_more_than_two_decimals', () => {
     // ARRANGE
-    const a = 1;
-    const b = 0.3333;
+    const a = 0.1;
+    const b = 0.2;
 
     // ACT
     const result = add(a, b);
 
     // ASSERT
-    expect(result).toBe(0.67);
+    // 0.1 + 0.2 = 0.30000000000000004, which should be rounded to 0.3
+    expect(result).toBe(0.3);
   });
 
-  it('should_handle_negative_numbers_when_subtracting', () => {
+  it('should_return_negative_sum_when_adding_negative_numbers', () => {
     // ARRANGE
-    const a = -1.25;
-    const b = -2.5;
+    const a = -10;
+    const b = -2.25;
 
     // ACT
     const result = add(a, b);
 
     // ASSERT
-    expect(result).toBe(1.25);
+    expect(result).toBe(-12.25);
   });
 
-  it('should_return_zero_when_arguments_are_equal', () => {
-    // ARRANGE
-    const a = 5;
-    const b = 5;
-
-    // ACT
-    const result = add(a, b);
-
-    // ASSERT
-    expect(result).toBe(0);
-  });
-
-  it('should_throw_when_first_argument_is_not_a_number', () => {
+  it('should_throw_error_when_first_argument_is_not_a_number', () => {
     // ARRANGE
     const a = '1' as unknown as number;
     const b = 2;
@@ -66,10 +55,10 @@ describe('add', () => {
     expect(() => add(a, b)).toThrowError(new Error('Both arguments must be numbers'));
   });
 
-  it('should_throw_when_second_argument_is_not_a_number', () => {
+  it('should_throw_error_when_second_argument_is_not_a_number', () => {
     // ARRANGE
     const a = 1;
-    const b = null as unknown as number;
+    const b = undefined as unknown as number;
 
     // ACT / ASSERT
     expect(() => add(a, b)).toThrowError(new Error('Both arguments must be numbers'));
