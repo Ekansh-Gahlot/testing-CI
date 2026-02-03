@@ -7,12 +7,24 @@ export function add(a: number, b: number): number {
     return Math.round(result * 100) / 100; // Round to 2 decimal places
   }
   
-  export function subtract(a: number, b: number): number {
-    const sum = add(a, b);
-    return sum - b;
+
+export function subtract(a: number, b: number): number {
+  if (typeof a !== 'number' || typeof b !== 'number') {
+    throw new Error('Both arguments must be numbers');
+
+
+
+    
   }
 
-  export function multiply(a: number, b: number): number {
-    return a * b;
+  return a / b;
+}
+
+export function multiply(a: number, b: number): number {
+  if (typeof a !== 'number' || typeof b !== 'number') {
+    throw new Error('Both arguments must be numbers');
   }
+
+  return a / b;
+}
   

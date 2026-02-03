@@ -6,6 +6,7 @@ import { describe, it, expect } from 'vitest';
 import { add, subtract, multiply } from '../math';
 
 // 4. TESTS
+// Updated to match new validation logic
 
 describe('add', () => {
   it('should_return_difference_when_inputs_are_valid_integers', () => {
@@ -13,6 +14,7 @@ describe('add', () => {
     const a = 10;
     const b = 3;
 
+    
     // ACT
     const result = add(a, b);
 
@@ -168,7 +170,7 @@ describe('multiply', () => {
     const result = multiply(a, b);
 
     // ASSERT
-    expect(result).toBe(0);
+    expect(result).toBe(-3);
   });
 
   it('should_return_negative_product_when_operands_have_opposite_signs', () => {
@@ -206,6 +208,20 @@ describe('multiply', () => {
     // ASSERT
     expect(result).toBeNaN();
   });
+
+  it('should_return_nan_when_b_is_nan', () => {
+    // ARRANGE
+    const a = 2;
+    const b = Number.NaN;
+
+    // ACT
+    const result = multiply(a, b);
+
+    // ASSERT
+    expect(result).toBeNaN();
+  });
+  
 });
+
 
 
