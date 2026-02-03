@@ -261,20 +261,60 @@ function hasTestForFunction(testFilePath: string, functionName: string): boolean
   try {
     const content = fs.readFileSync(testFilePath, "utf-8");
     
-    const patterns = [
-      new RegExp(`describe\\s*\\(\\s*['"\`]${functionName}['"\`]\\s*,`, "g"),
-      new RegExp(`describe\\s*\\(\\s*['"\`][^'"\`]*[\\s-]${functionName}['"\`]\\s*,`, "g"),
-      new RegExp(`(?:test|it)\\s*\\(\\s*['"\`][^'"\`]*${functionName}[^'"\`]*['"\`]`, "gi"),
-    ];
+    // Parse the test file with AST
+    const ast = babelParser.parse(content, {
+      sourceType: "module",
+      plugins: [
+        "typescript",
+        "jsx",
+        "decorators-legacy",
+        "classProperties",
+        "objectRestSpread",
+      ],
+    });
 
-    for (const pattern of patterns) {
-      if (pattern.test(content)) {
-        return true;
-      }
-    }
+    let found = false;
 
-    return false;
+    // Traverse AST to find test/describe/it calls
+    traverse(ast, {
+      CallExpression(path: any) {
+        const node = path.node;
+        
+        // Check if it's a test function call (describe, test, it, etc.)
+        const isTestCall = 
+          (node.callee.type === "Identifier" && 
+           ["describe", "test", "it", "expect"].includes(node.callee.name)) ||
+          (node.callee.type === "MemberExpression" &&
+           node.callee.object.type === "Identifier" &&
+           ["describe", "test", "it"].includes(node.callee.object.name));
+
+        if (isTestCall && node.arguments.length > 0) {
+          const firstArg = node.arguments[0];
+          
+          // Check if the first argument (test description) is a string literal
+          if (firstArg.type === "StringLiteral" || firstArg.type === "TemplateLiteral") {
+            let testDescription = "";
+            
+            if (firstArg.type === "StringLiteral") {
+              testDescription = firstArg.value;
+            } else if (firstArg.type === "TemplateLiteral") {
+              // Handle template literals
+              testDescription = firstArg.quasis.map((q: any) => q.value.raw).join("");
+            }
+            
+            // Check if the function name appears in the test description
+            if (testDescription.includes(functionName)) {
+              found = true;
+              path.stop(); // Stop traversal once found
+            }
+          }
+        }
+      },
+    });
+
+    return found;
   } catch (error) {
+    // Fallback: if AST parsing fails, return false
     return false;
   }
 }
