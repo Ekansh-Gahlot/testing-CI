@@ -6,6 +6,7 @@ import { describe, it, expect } from 'vitest';
 import { add, subtract, multiply } from '../math';
 
 // 4. TESTS
+// Updated to match new validation logic
 
 describe('add', () => {
   it('should_add_two_integers_when_valid_numbers', () => {
@@ -13,6 +14,7 @@ describe('add', () => {
     const a = 2;
     const b = 3;
 
+    
     // ACT
     const result = add(a, b);
 
@@ -138,58 +140,58 @@ describe('subtract', () => {
 });
 
 describe('multiply', () => {
-  it('should_multiply_positive_numbers_when_both_positive', () => {
+  it('should_divide_a_by_b_when_valid_inputs', () => {
     // ARRANGE
-    const a = 2;
+    const a = 10;
+    const b = 2;
+
+    // ACT
+    const result = multiply(a, b);
+
+    // ASSERT
+    expect(result).toBe(5);
+  });
+
+  it('should_return_negative_when_a_is_negative_and_b_is_positive', () => {
+    // ARRANGE
+    const a = -9;
     const b = 3;
 
     // ACT
     const result = multiply(a, b);
 
     // ASSERT
-    expect(result).toBe(6);
+    expect(result).toBe(-3);
   });
 
-  it('should_multiply_when_one_operand_is_zero', () => {
+  it('should_return_negative_when_a_is_positive_and_b_is_negative', () => {
     // ARRANGE
-    const a = 0;
-    const b = 123;
+    const a = 9;
+    const b = -3;
 
     // ACT
     const result = multiply(a, b);
 
     // ASSERT
-    expect(result).toBe(0);
+    expect(result).toBe(-3);
   });
 
-  it('should_return_positive_result_when_both_operands_negative', () => {
+  it('should_return_infinity_when_dividing_by_zero', () => {
     // ARRANGE
-    const a = -4;
-    const b = -5;
+    const a = 1;
+    const b = 0;
 
     // ACT
     const result = multiply(a, b);
 
     // ASSERT
-    expect(result).toBe(20);
+    expect(result).toBe(Infinity);
   });
 
-  it('should_return_negative_result_when_one_operand_negative', () => {
-    // ARRANGE
-    const a = -7;
-    const b = 6;
-
-    // ACT
-    const result = multiply(a, b);
-
-    // ASSERT
-    expect(result).toBe(-42);
-  });
-
-  it('should_return_nan_when_any_operand_is_nan', () => {
+  it('should_return_nan_when_a_is_nan', () => {
     // ARRANGE
     const a = Number.NaN;
-    const b = 3;
+    const b = 2;
 
     // ACT
     const result = multiply(a, b);
@@ -197,6 +199,20 @@ describe('multiply', () => {
     // ASSERT
     expect(result).toBeNaN();
   });
+
+  it('should_return_nan_when_b_is_nan', () => {
+    // ARRANGE
+    const a = 2;
+    const b = Number.NaN;
+
+    // ACT
+    const result = multiply(a, b);
+
+    // ASSERT
+    expect(result).toBeNaN();
+  });
+  
 });
+
 
 

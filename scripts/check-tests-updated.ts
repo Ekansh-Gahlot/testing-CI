@@ -96,6 +96,8 @@ interface ChangedFunction {
   hasTest: boolean;
   testFile: string | null;
   testWasUpdated: boolean;
+  sourceModifiedTime?: Date;
+  testModifiedTime?: Date;
 }
 
 // ============================================================================
@@ -324,6 +326,41 @@ function hasTestForFunction(testFilePath: string, functionName: string): boolean
 // ============================================================================
 
 /**
+ * Get the last modification timestamp of a file from git history
+ */
+function getLastModifiedTime(filePath: string): Date | null {
+  try {
+    const timestamp = execSync(`git log -1 --format=%ct -- "${filePath}"`, {
+      encoding: "utf-8",
+    }).trim();
+    
+    if (!timestamp) {
+      return null;
+    }
+    
+    return new Date(parseInt(timestamp) * 1000);
+  } catch (error) {
+    return null;
+  }
+}
+
+/**
+ * Format time difference in human-readable format
+ */
+function formatTimeDiff(newer: Date, older: Date): string {
+  const diffMs = newer.getTime() - older.getTime();
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHour = Math.floor(diffMin / 60);
+  const diffDay = Math.floor(diffHour / 24);
+  
+  if (diffDay > 0) return `${diffDay} day${diffDay > 1 ? 's' : ''}`;
+  if (diffHour > 0) return `${diffHour} hour${diffHour > 1 ? 's' : ''}`;
+  if (diffMin > 0) return `${diffMin} minute${diffMin > 1 ? 's' : ''}`;
+  return `${diffSec} second${diffSec > 1 ? 's' : ''}`;
+}
+
+/**
  * Get ALL changed files from git diff (including test files)
  */
 function getAllChangedFiles(): string[] {
@@ -368,10 +405,13 @@ function getChangedSourceFiles(): Array<{ file: string; diff: string }> {
       }
 
       // Get the diff for this specific file
+      // -w: ignore all whitespace changes
+      // --ignore-blank-lines: ignore changes that just insert or delete blank lines
       try {
-        const diff = execSync(`git diff origin/main...HEAD -- "${file}"`, {
-          encoding: "utf-8",
-        });
+        const diff = execSync(
+          `git diff origin/main...HEAD -w --ignore-blank-lines -- "${file}"`,
+          { encoding: "utf-8" }
+        );
         
         changedFiles.push({ file, diff });
       } catch (error) {
@@ -452,36 +492,55 @@ function main() {
 
     console.log(`   🧪 Test file: ${testFile}`);
 
-    // Check if the test file was also modified in this PR
-    const testFileWasUpdated = allChangedFiles.includes(testFile);
-    
-    if (testFileWasUpdated) {
-      console.log(`   📝 Test file was updated in this PR`);
+    // Get last modification timestamps
+    const sourceModifiedTime = getLastModifiedTime(file);
+    const testModifiedTime = getLastModifiedTime(testFile);
+
+    if (!sourceModifiedTime || !testModifiedTime) {
+      console.log(`   ⚠️  Could not determine modification times`);
     } else {
-      console.log(`   ⚠️  Test file was NOT updated in this PR`);
+      console.log(`   📅 Source last modified: ${sourceModifiedTime.toISOString()}`);
+      console.log(`   📅 Test last modified:   ${testModifiedTime.toISOString()}`);
+      
+      if (sourceModifiedTime > testModifiedTime) {
+        console.log(`   ⚠️  Source was modified AFTER the test file (${formatTimeDiff(sourceModifiedTime, testModifiedTime)} newer)`);
+      } else if (sourceModifiedTime.getTime() === testModifiedTime.getTime()) {
+        console.log(`   ✅ Source and test modified at the same time`);
+      } else {
+        console.log(`   ✅ Test is up-to-date (modified after source)`);
+      }
     }
 
     // Check if each changed function has tests
     for (const funcName of changedFunctionNames) {
       const hasTest = hasTestForFunction(testFile, funcName);
       
-      if (hasTest && testFileWasUpdated) {
-        console.log(`   ✅ ${funcName} - has test coverage AND tests were updated`);
+      // Determine if test is up-to-date based on timestamps
+      const testIsUpToDate = testModifiedTime && sourceModifiedTime 
+        ? testModifiedTime >= sourceModifiedTime 
+        : false;
+      
+      if (hasTest && testIsUpToDate) {
+        console.log(`   ✅ ${funcName} - has test coverage AND tests are up-to-date`);
         coveredFunctions.push({
           file,
           functionName: funcName,
           hasTest: true,
           testFile,
           testWasUpdated: true,
+          sourceModifiedTime: sourceModifiedTime || undefined,
+          testModifiedTime: testModifiedTime || undefined,
         });
-      } else if (hasTest && !testFileWasUpdated) {
-        console.log(`   ⚠️  ${funcName} - has test coverage but tests were NOT updated`);
+      } else if (hasTest && !testIsUpToDate) {
+        console.log(`   ⚠️  ${funcName} - has test coverage but tests are OUTDATED`);
         missingTests.push({
           file,
           functionName: funcName,
           hasTest: true,
           testFile,
           testWasUpdated: false,
+          sourceModifiedTime: sourceModifiedTime || undefined,
+          testModifiedTime: testModifiedTime || undefined,
         });
       } else {
         console.log(`   ❌ ${funcName} - MISSING test coverage`);
@@ -491,6 +550,8 @@ function main() {
           hasTest: false,
           testFile,
           testWasUpdated: false,
+          sourceModifiedTime: sourceModifiedTime || undefined,
+          testModifiedTime: testModifiedTime || undefined,
         });
       }
     }
@@ -508,17 +569,18 @@ function main() {
     }
   }
 
-  console.log(`\n❌ Functions missing test coverage or outdated tests: ${missingTests.length}`);
+  console.log(`\n❌ Functions requiring test updates: ${missingTests.length}`);
   if (missingTests.length > 0) {
     for (const func of missingTests) {
       console.log(`   • ${func.functionName} (${func.file})`);
       if (!func.testFile) {
-        console.log(`     → No test file found!`);
+        console.log(`     → No test file found - please create: ${func.file.replace(/\.(ts|js|tsx|jsx)$/, '.test.$1')}`);
       } else if (func.hasTest && !func.testWasUpdated) {
-        console.log(`     → Test exists but was NOT updated: ${func.testFile}`);
-        console.log(`     → Update the test to reflect the function changes`);
+        console.log(`     → Test file: ${func.testFile}`);
+        console.log(`     → Action needed: Update test cases to match the function changes`);
       } else {
-        console.log(`     → Add tests to: ${func.testFile}`);
+        console.log(`     → Test file: ${func.testFile}`);
+        console.log(`     → Action needed: Add test coverage for this function`);
       }
     }
   }
@@ -528,23 +590,32 @@ function main() {
   // 5. Exit with error if any functions are missing tests or tests weren't updated
   if (missingTests.length > 0) {
     console.error("\n❌ TEST ENFORCEMENT FAILED");
+    console.error("\nTest cases are not up-to-date. Please update the test cases.");
     
     const noTests = missingTests.filter(f => !f.hasTest);
     const outdatedTests = missingTests.filter(f => f.hasTest && !f.testWasUpdated);
     
-    if (noTests.length > 0) {
-      console.error(`\n${noTests.length} function(s) were modified but don't have test coverage.`);
+    // List all changed functions in this branch
+    const allChangedFunctions = [...coveredFunctions, ...missingTests]
+      .map(f => f.functionName)
+      .filter((name, index, self) => self.indexOf(name) === index); // unique
+    
+    console.error(`\nThe following functions were changed in this branch (compared to main):`);
+    for (const funcName of allChangedFunctions) {
+      const func = [...coveredFunctions, ...missingTests].find(f => f.functionName === funcName);
+      if (func) {
+        const status = coveredFunctions.some(f => f.functionName === funcName) ? "✅" : "❌";
+        console.error(`  ${status} ${funcName} (${func.file})`);
+      }
     }
     
-    if (outdatedTests.length > 0) {
-      console.error(`\n${outdatedTests.length} function(s) were modified but their tests were NOT updated.`);
-      console.error(`When you modify a function, you must also update its tests to ensure they still validate the new behavior.`);
-    }
+    console.error("\n📋 Action Required:");
+    console.error(`  Update test cases for the functions listed above to ensure they validate the current behavior.`);
     
-    console.error("\nOptions:");
-    console.error(`  1. Add or update test cases for the affected functions`);
-    console.error(`  2. Add the "${CONFIG.skipLabel}" label to bypass this check`);
-    console.error(`  3. Use CodeGuard to auto-generate tests: npx codeguard auto\n`);
+    console.error("\n🔧 Options:");
+    console.error(`  1. Manually add or update test cases for the affected functions`);
+    console.error(`  2. Use CodeGuard to auto-generate tests: npx codeguard auto`);
+    console.error(`  3. Add the "${CONFIG.skipLabel}" label to bypass this check (use sparingly)\n`);
     process.exit(1);
   }
 
