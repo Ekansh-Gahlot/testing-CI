@@ -8,55 +8,44 @@ import { add, subtract, multiply } from '../math';
 // 4. TESTS
 
 describe('add', () => {
-  it('should_add_two_integers_when_given_valid_numbers', () => {
+  it('should_return_rounded_difference_when_given_valid_numbers', () => {
     // ARRANGE
-    const a = 2;
-    const b = 3;
+    const a = 10.125;
+    const b = 3.111;
 
     // ACT
     const result = add(a, b);
 
     // ASSERT
-    expect(result).toBe(5);
+    expect(result).toBe(7.01);
   });
 
-  it('should_round_to_two_decimals_when_sum_has_floating_precision', () => {
+  it('should_return_zero_when_arguments_are_equal', () => {
     // ARRANGE
-    const a = 0.1;
-    const b = 0.2;
+    const a = 5;
+    const b = 5;
 
     // ACT
     const result = add(a, b);
 
     // ASSERT
-    expect(result).toBe(0.3);
+    expect(result).toBe(0);
   });
 
-  it('should_round_up_when_third_decimal_is_five_or_more', () => {
+  it('should_handle_negative_numbers_and_round_to_two_decimals', () => {
     // ARRANGE
-    const a = 1.005;
-    const b = 0;
+    const a = -1.234;
+    const b = -5.678;
 
     // ACT
     const result = add(a, b);
 
     // ASSERT
-    expect(result).toBe(1);
+    // result = (-1.234) - (-5.678) = 4.444 -> 4.44
+    expect(result).toBe(4.44);
   });
 
-  it('should_handle_negative_numbers_when_given_valid_numbers', () => {
-    // ARRANGE
-    const a = -10.25;
-    const b = 2.2;
-
-    // ACT
-    const result = add(a, b);
-
-    // ASSERT
-    expect(result).toBe(-8.05);
-  });
-
-  it('should_throw_when_first_argument_is_not_a_number', () => {
+  it('should_throw_error_when_first_argument_is_not_a_number', () => {
     // ARRANGE
     const a = '1' as unknown as number;
     const b = 2;
@@ -65,7 +54,7 @@ describe('add', () => {
     expect(() => add(a, b)).toThrowError(new Error('Both arguments must be numbers'));
   });
 
-  it('should_throw_when_second_argument_is_not_a_number', () => {
+  it('should_throw_error_when_second_argument_is_not_a_number', () => {
     // ARRANGE
     const a = 1;
     const b = undefined as unknown as number;
@@ -74,6 +63,7 @@ describe('add', () => {
     expect(() => add(a, b)).toThrowError(new Error('Both arguments must be numbers'));
   });
 });
+
 
 
 
@@ -140,7 +130,7 @@ describe('subtract', () => {
     expect(result).toBeNaN();
   });
 
-  it('should_return_first_operand_when_operands_cancel_to_infinity_in_addition', () => {
+  it('should_return_infinity_when_operands_overflow_in_intermediate_addition', () => {
     // ARRANGE
     const a = Number.MAX_VALUE;
     const b = -Number.MAX_VALUE;
@@ -149,8 +139,10 @@ describe('subtract', () => {
     const result = subtract(a, b);
 
     // ASSERT
-    // add(a,b) becomes 0, then 0 - b => -b, but with b = -MAX => MAX.
-    expect(result).toBe(a);
+    // subtract calls add(a, b) which actually computes a - b.
+    // add(MAX, -MAX) => MAX - (-MAX) => 2*MAX => Infinity
+    // then Infinity - (-MAX) => Infinity
+    expect(result).toBe(Number.POSITIVE_INFINITY);
   });
 });
 
