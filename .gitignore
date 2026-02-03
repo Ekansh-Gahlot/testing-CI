@@ -3,3 +3,6 @@ dist
 build
 .test.
 .spec.
+coverage/
+codeguard.json
+.codeguard-cache/
