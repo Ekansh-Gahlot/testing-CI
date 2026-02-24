@@ -316,7 +316,116 @@ function getChangedFunctions(filePath: string, diff: string, commitHash: string)
     }
   }
 
-  return changedFunctionNames;
+  // Filter out cosmetic-only changes (quote style, trailing commas, etc.)
+  return filterCosmeticChanges(filePath, changedFunctionNames, commitHash);
+}
+
+/**
+ * Extract a function's AST subtree from source content and normalize it
+ * to a structure string (stripping locations, whitespace, formatting).
+ * Returns null if the function cannot be found.
+ */
+function extractNormalizedFunctionAST(content: string, funcName: string): string | null {
+  try {
+    const ast = babelParser.parse(content, {
+      sourceType: "module",
+      plugins: BABEL_PLUGINS,
+    });
+
+    let result: string | null = null;
+
+    traverse(ast, {
+      enter(path: any) {
+        if (result) return;
+        const node = path.node;
+
+        let name: string | null = null;
+
+        if (node.type === "FunctionDeclaration" && node.id?.name) {
+          name = node.id.name;
+        } else if (
+          node.type === "VariableDeclarator" &&
+          node.id?.name &&
+          (node.init?.type === "ArrowFunctionExpression" || node.init?.type === "FunctionExpression")
+        ) {
+          name = node.id.name;
+        } else if (node.type === "ClassMethod" && node.key?.type === "Identifier") {
+          const classPath = path.parentPath?.parentPath;
+          const className = classPath?.node?.id?.name || "AnonymousClass";
+          name = `${className}.${node.key.name}`;
+        }
+
+        if (name === funcName) {
+          result = normalizeAST(node);
+          path.stop();
+        }
+      },
+    });
+
+    return result;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Recursively normalize an AST node by stripping location info, extra
+ * metadata, and formatting artifacts so two semantically identical nodes
+ * produce the same string.
+ */
+function normalizeAST(node: any): string {
+  if (node === null || node === undefined) return "null";
+  if (typeof node !== "object") return JSON.stringify(node);
+  if (Array.isArray(node)) {
+    return "[" + node.map(normalizeAST).join(",") + "]";
+  }
+
+  // Skip location/formatting keys
+  const skipKeys = new Set([
+    "start", "end", "loc", "range",
+    "leadingComments", "trailingComments", "innerComments",
+    "extra", // Babel stores quote style, parenthesization, etc. in "extra"
+  ]);
+
+  const entries = Object.keys(node)
+    .filter(k => !skipKeys.has(k))
+    .sort()
+    .map(k => `${k}:${normalizeAST(node[k])}`);
+
+  return "{" + entries.join(",") + "}";
+}
+
+/**
+ * Filter out functions whose changes are purely cosmetic (formatting, quotes,
+ * trailing commas, etc.) by comparing their normalized ASTs before and after.
+ */
+function filterCosmeticChanges(
+  filePath: string,
+  functionNames: string[],
+  commitHash: string
+): string[] {
+  if (functionNames.length === 0) return [];
+
+  // Get file content at this commit (after the change)
+  const afterContent = getFileContentAtCommit(commitHash, filePath);
+  if (!afterContent) return functionNames; // can't verify, keep all
+
+  // Get file content before this commit
+  const beforeContent = getFileContentAtCommit(`${commitHash}~1`, filePath);
+  if (!beforeContent) return functionNames; // new file, all changes are real
+
+  return functionNames.filter(funcName => {
+    const beforeAST = extractNormalizedFunctionAST(beforeContent, funcName);
+    const afterAST = extractNormalizedFunctionAST(afterContent, funcName);
+
+    if (beforeAST === null || afterAST === null) {
+      // Can't extract one side — treat as a real change
+      return true;
+    }
+
+    // If the normalized ASTs differ, it's a real change
+    return beforeAST !== afterAST;
+  });
 }
 
 // ============================================================================
@@ -525,10 +634,12 @@ async function getFilesChangedInCommit(commitHash: string): Promise<FileChange[]
   }
 }
 
-async function getDiffForFileInCommit(commitHash: string, filePath: string): Promise<string> {
+async function getDiffForFileInCommit(commitHash: string, filePath: string, ignoreWhitespace = true): Promise<string> {
   try {
+    // Use -w flag to ignore whitespace-only changes as a fast path
+    const wFlag = ignoreWhitespace ? "-w " : "";
     const { stdout } = await execAsync(
-      `git show ${commitHash} -- "${filePath}"`,
+      `git show ${wFlag}${commitHash} -- "${filePath}"`,
       { encoding: "utf-8" }
     );
     return stdout;

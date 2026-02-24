@@ -17,7 +17,7 @@ export function subtract(a: number, b: number): number {
     return 0;
   }
   if (a > 0 && b < 0) {
-    console.log('Not Allowed!')
+    console.log('Not Allowed!, Please contact the developer asap ')
     return -1;
   }
 
