@@ -149,60 +149,69 @@ describe('subtract', () => {
 
 
 describe('multiply', () => {
-  it('should_return_expected_result_when_given_two_numbers', () => {
+  it('should_return_product_when_given_positive_numbers', () => {
     // ARRANGE
-    const a = 10;
-    const b = 2;
+    const a = 3;
+    const b = 4;
 
     // ACT
     const result = multiply(a, b);
 
     // ASSERT
-    expect(result).toBe(5);
+    expect(result).toBe(12);
   });
 
-  it('should_return_negative_result_when_a_is_negative', () => {
+  it('should_return_zero_when_first_argument_is_zero', () => {
     // ARRANGE
-    const a = -9;
-    const b = 3;
+    const a = 0;
+    const b = 999;
 
     // ACT
     const result = multiply(a, b);
 
     // ASSERT
-    expect(result).toBe(-3);
+    expect(result).toBe(0);
   });
 
-  it('should_return_infinity_when_dividing_by_zero', () => {
+  it('should_return_positive_product_when_both_arguments_are_negative', () => {
     // ARRANGE
-    const a = 1;
-    const b = 0;
+    const a = -3;
+    const b = -4;
 
     // ACT
     const result = multiply(a, b);
 
     // ASSERT
-    expect(result).toBe(Infinity);
+    expect(result).toBe(12);
   });
 
-  it('should_throw_when_a_is_not_a_number', () => {
+  it('should_throw_when_first_argument_is_not_a_number', () => {
     // ARRANGE
-    const a = '1' as unknown as number;
-    const b = 2;
+    const a = '3' as unknown as number;
+    const b = 4;
 
-    // ACT / ASSERT
-    expect(() => multiply(a, b)).toThrowError(new Error('Both arguments must be numbers'));
+    // ACT
+    const act = () => multiply(a, b);
+
+    // ASSERT
+    expect(act).toThrow(Error);
+    expect(act).toThrow('Both arguments must be numbers');
   });
 
-  it('should_throw_when_b_is_not_a_number', () => {
+  it('should_throw_when_a_is_positive_and_b_is_negative', () => {
     // ARRANGE
-    const a = 1;
-    const b = '2' as unknown as number;
+    const a = 2;
+    const b = -3;
 
-    // ACT / ASSERT
-    expect(() => multiply(a, b)).toThrowError(new Error('Both arguments must be numbers'));
+    // ACT
+    const act = () => multiply(a, b);
+
+    // ASSERT
+    expect(act).toThrow(Error);
+    expect(act).toThrow('Both arguments must be numbers');
   });
 });
+
 
 
 
