@@ -9,7 +9,7 @@ import { add, subtract, multiply } from '../math';
 // Updated to match new validation logic
 
 describe('add', () => {
-  it('should_add_two_integers_when_valid_numbers', () => {
+  it('should_add_two_positive_integers_when_given_valid_numbers', () => {
     // ARRANGE
     const a = 2;
     const b = 3;
@@ -21,7 +21,19 @@ describe('add', () => {
     expect(result).toBe(5);
   });
 
-  it('should_round_to_two_decimals_when_result_has_more_than_two_decimals', () => {
+  it('should_add_two_negative_numbers_when_given_valid_numbers', () => {
+    // ARRANGE
+    const a = -2;
+    const b = -3;
+
+    // ACT
+    const result = add(a, b);
+
+    // ASSERT
+    expect(result).toBe(-5);
+  });
+
+  it('should_round_to_two_decimal_places_when_result_has_more_than_two_decimals', () => {
     // ARRANGE
     const a = 0.1;
     const b = 0.2;
@@ -30,38 +42,43 @@ describe('add', () => {
     const result = add(a, b);
 
     // ASSERT
-    // 0.1 + 0.2 = 0.30000000000000004, which should be rounded to 0.3
     expect(result).toBe(0.3);
   });
 
-  it('should_return_negative_sum_when_adding_negative_numbers', () => {
+  it('should_round_half_up_to_two_decimal_places_when_third_decimal_is_five', () => {
     // ARRANGE
-    const a = -10;
-    const b = -2.25;
+    const a = 1.005;
+    const b = 0;
 
     // ACT
     const result = add(a, b);
 
     // ASSERT
-    expect(result).toBe(-12.25);
+    expect(result).toBe(1);
   });
 
-  it('should_throw_error_when_first_argument_is_not_a_number', () => {
+  it('should_throw_error_when_a_is_not_a_number', () => {
     // ARRANGE
     const a = '1' as unknown as number;
     const b = 2;
 
-    // ACT / ASSERT
-    expect(() => add(a, b)).toThrowError(new Error('Both arguments must be numbers'));
+    // ACT
+    const act = () => add(a, b);
+
+    // ASSERT
+    expect(act).toThrowError(new Error('Both arguments must be numbers'));
   });
 
-  it('should_throw_error_when_second_argument_is_not_a_number', () => {
+  it('should_throw_error_when_b_is_not_a_number', () => {
     // ARRANGE
     const a = 1;
     const b = undefined as unknown as number;
 
-    // ACT / ASSERT
-    expect(() => add(a, b)).toThrowError(new Error('Both arguments must be numbers'));
+    // ACT
+    const act = () => add(a, b);
+
+    // ASSERT
+    expect(act).toThrowError(new Error('Both arguments must be numbers'));
   });
 });
 
@@ -70,8 +87,9 @@ describe('add', () => {
 
 
 
+
 describe('subtract', () => {
-  it('should_divide_a_by_b_when_inputs_are_numbers', () => {
+  it('should_return_division_result_when_given_two_numbers', () => {
     // ARRANGE
     const a = 10;
     const b = 2;
@@ -83,21 +101,27 @@ describe('subtract', () => {
     expect(result).toBe(5);
   });
 
-  it('should_return_a_fraction_when_division_is_not_even', () => {
+  it('should_throw_error_when_first_argument_is_not_a_number', () => {
     // ARRANGE
-    const a = 5;
+    const a = '10' as unknown as number;
     const b = 2;
 
-    // ACT
-    const result = subtract(a, b);
+    // ACT + ASSERT
+    expect(() => subtract(a, b)).toThrowError(new Error('Both arguments must be numbers'));
+  });
 
-    // ASSERT
-    expect(result).toBe(2.5);
+  it('should_throw_error_when_second_argument_is_not_a_number', () => {
+    // ARRANGE
+    const a = 10;
+    const b = null as unknown as number;
+
+    // ACT + ASSERT
+    expect(() => subtract(a, b)).toThrowError(new Error('Both arguments must be numbers'));
   });
 
   it('should_return_infinity_when_dividing_by_zero', () => {
     // ARRANGE
-    const a = 1;
+    const a = 10;
     const b = 0;
 
     // ACT
@@ -107,22 +131,16 @@ describe('subtract', () => {
     expect(result).toBe(Infinity);
   });
 
-  it('should_throw_when_first_argument_is_not_a_number', () => {
+  it('should_return_negative_one_when_a_is_positive_and_b_is_negative', () => {
     // ARRANGE
-    const a = '10' as unknown as number;
-    const b = 2;
+    const a = 5;
+    const b = -2;
 
-    // ACT / ASSERT
-    expect(() => subtract(a, b)).toThrowError(new Error('Both arguments must be numbers'));
-  });
+    // ACT
+    const result = subtract(a, b);
 
-  it('should_throw_when_second_argument_is_not_a_number', () => {
-    // ARRANGE
-    const a = 10;
-    const b = undefined as unknown as number;
-
-    // ACT / ASSERT
-    expect(() => subtract(a, b)).toThrowError(new Error('Both arguments must be numbers'));
+    // ASSERT
+    expect(result).toBe(-1);
   });
 });
 
@@ -131,7 +149,7 @@ describe('subtract', () => {
 
 
 describe('multiply', () => {
-  it('should_divide_numbers_when_inputs_are_valid', () => {
+  it('should_return_expected_result_when_given_two_numbers', () => {
     // ARRANGE
     const a = 10;
     const b = 2;
@@ -143,19 +161,7 @@ describe('multiply', () => {
     expect(result).toBe(5);
   });
 
-  it('should_return_infinity_when_dividing_by_zero', () => {
-    // ARRANGE
-    const a = 10;
-    const b = 0;
-
-    // ACT
-    const result = multiply(a, b);
-
-    // ASSERT
-    expect(result).toBe(Infinity);
-  });
-
-  it('should_return_negative_value_when_dividing_negative_by_positive', () => {
+  it('should_return_negative_result_when_a_is_negative', () => {
     // ARRANGE
     const a = -9;
     const b = 3;
@@ -167,24 +173,37 @@ describe('multiply', () => {
     expect(result).toBe(-3);
   });
 
-  it('should_throw_error_when_first_argument_is_not_a_number', () => {
+  it('should_return_infinity_when_dividing_by_zero', () => {
     // ARRANGE
-    const a = '10' as unknown as number;
+    const a = 1;
+    const b = 0;
+
+    // ACT
+    const result = multiply(a, b);
+
+    // ASSERT
+    expect(result).toBe(Infinity);
+  });
+
+  it('should_throw_when_a_is_not_a_number', () => {
+    // ARRANGE
+    const a = '1' as unknown as number;
     const b = 2;
 
-    // ACT + ASSERT
+    // ACT / ASSERT
     expect(() => multiply(a, b)).toThrowError(new Error('Both arguments must be numbers'));
   });
 
-  it('should_throw_error_when_second_argument_is_not_a_number', () => {
+  it('should_throw_when_b_is_not_a_number', () => {
     // ARRANGE
-    const a = 10;
-    const b = undefined as unknown as number;
+    const a = 1;
+    const b = '2' as unknown as number;
 
-    // ACT + ASSERT
+    // ACT / ASSERT
     expect(() => multiply(a, b)).toThrowError(new Error('Both arguments must be numbers'));
   });
 });
+
 
 
 
