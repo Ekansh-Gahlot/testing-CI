@@ -34,3 +34,18 @@ export function multiply(a: number, b: number): number {
     return a * b;
   }
 }
+
+export const nestedFunction = (a: number, b: number): number => {
+  if (a > 0 && b < 0) {
+    console.log('Not Allowed!, Please contact the developer asap ')
+    return -1;
+  }
+  if (a < 0 && b > 0) {
+    multiply(a, b);
+  }
+  else {
+    subtract(a, b);
+    return a + b;
+  }
+  return a + b;
+}
