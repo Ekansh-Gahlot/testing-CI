@@ -3,7 +3,7 @@
 
 // 2. IMPORTS
 import { describe, it, expect } from 'vitest';
-import { add, subtract, multiply } from '../math';
+import { add, subtract, multiply, nestedFunction } from '../math';
 
 // 4. TESTS
 // Updated to match new validation logic
@@ -209,6 +209,68 @@ describe('multiply', () => {
     // ASSERT
     expect(act).toThrow(Error);
     expect(act).toThrow('Both arguments must be numbers');
+  });
+});
+
+describe('nestedFunction', () => {
+  it('should_return_negativeOne_when_aPositiveAndbNegative', () => {
+    // ARRANGE
+    const a = 2;
+    const b = -3;
+
+    // ACT
+    const result = nestedFunction(a, b);
+
+    // ASSERT
+    expect(result).toBe(-1);
+  });
+
+  it('should_return_sum_when_aNegativeAndbPositive', () => {
+    // ARRANGE
+    const a = -2;
+    const b = 3;
+
+    // ACT
+    const result = nestedFunction(a, b);
+
+    // ASSERT
+    expect(result).toBe(1);
+  });
+
+  it('should_return_sum_when_bothPositive', () => {
+    // ARRANGE
+    const a = 2;
+    const b = 3;
+
+    // ACT
+    const result = nestedFunction(a, b);
+
+    // ASSERT
+    expect(result).toBe(5);
+  });
+
+  it('should_return_sum_when_bothNegative', () => {
+    // ARRANGE
+    const a = -2;
+    const b = -3;
+
+    // ACT
+    const result = nestedFunction(a, b);
+
+    // ASSERT
+    expect(result).toBe(-5);
+  });
+
+  it('should_return_sum_when_aZeroAndbPositive', () => {
+    // ARRANGE
+    const a = 0;
+    const b = 7;
+
+    // ACT
+    const result = nestedFunction(a, b);
+
+    // ASSERT
+    expect(result).toBe(7);
   });
 });
 
