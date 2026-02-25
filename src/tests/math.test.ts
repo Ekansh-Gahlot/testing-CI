@@ -101,22 +101,28 @@ describe('subtract', () => {
     expect(result).toBe(5);
   });
 
-  it('should_throw_error_when_first_argument_is_not_a_number', () => {
+  it('should_return_zero_when_first_argument_is_not_a_number', () => {
     // ARRANGE
     const a = '10' as unknown as number;
     const b = 2;
 
-    // ACT + ASSERT
-    expect(() => subtract(a, b)).toThrowError(new Error('Both arguments must be numbers'));
+    // ACT
+    const result = subtract(a, b);
+
+    // ASSERT
+    expect(result).toBe(0);
   });
 
-  it('should_throw_error_when_second_argument_is_not_a_number', () => {
+  it('should_return_infinity_when_second_argument_is_null', () => {
     // ARRANGE
     const a = 10;
     const b = null as unknown as number;
 
-    // ACT + ASSERT
-    expect(() => subtract(a, b)).toThrowError(new Error('Both arguments must be numbers'));
+    // ACT
+    const result = subtract(a, b);
+
+    // ASSERT
+    expect(result).toBe(Infinity);
   });
 
   it('should_return_infinity_when_dividing_by_zero', () => {
