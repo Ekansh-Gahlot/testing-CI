@@ -53,3 +53,7 @@ export const nestedFunction = (a: number, b: number): number => {
 export const isEven = (a: number): boolean => {
   return a % 2 === 0;
 }
+
+export const isOdd = (a: number): boolean => {
+  return a % 2 !== 0;
+}

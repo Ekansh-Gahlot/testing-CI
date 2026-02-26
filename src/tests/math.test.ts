@@ -5,6 +5,8 @@
 import { describe, it, expect } from 'vitest';
 import { add, subtract, multiply, nestedFunction } from '../math';
 import { isEven } from '../math';
+import { isOdd } from '../math';
+
 
 
 // 4. TESTS
@@ -364,3 +366,67 @@ describe('isEven', () => {
     expect(result).toBe(false);
   });
 });
+
+describe('isOdd', () => {
+  // This function: returns true when the input number is odd (a % 2 !== 0).
+  // It calls: no other functions/modules.
+  // I will only mock: nothing (pure function).
+  // Edge cases to cover: 0, negative numbers, non-integer numbers.
+
+  it('should_return_true_when_number_is_positive_odd', () => {
+    // ARRANGE
+    const input = 3;
+
+    // ACT
+    const result = isOdd(input);
+
+    // ASSERT
+    expect(result).toBe(true);
+  });
+
+  it('should_return_false_when_number_is_positive_even', () => {
+    // ARRANGE
+    const input = 4;
+
+    // ACT
+    const result = isOdd(input);
+
+    // ASSERT
+    expect(result).toBe(false);
+  });
+
+  it('should_return_false_when_number_is_zero', () => {
+    // ARRANGE
+    const input = 0;
+
+    // ACT
+    const result = isOdd(input);
+
+    // ASSERT
+    expect(result).toBe(false);
+  });
+
+  it('should_return_true_when_number_is_negative_odd', () => {
+    // ARRANGE
+    const input = -5;
+
+    // ACT
+    const result = isOdd(input);
+
+    // ASSERT
+    expect(result).toBe(true);
+  });
+
+  it('should_return_true_when_number_is_non_integer_with_odd_remainder', () => {
+    // ARRANGE
+    const input = 3.5;
+
+    // ACT
+    const result = isOdd(input);
+
+    // ASSERT
+    // 3.5 % 2 === 1.5 => 1.5 !== 0
+    expect(result).toBe(true);
+  });
+});
+
