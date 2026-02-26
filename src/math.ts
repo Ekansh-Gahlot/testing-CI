@@ -31,7 +31,7 @@ export function multiply(a: number, b: number): number {
     throw new Error('Both arguments must be numbers')
   }
   else {
-    return a - b;
+    return a * b;
   }
 }
 
