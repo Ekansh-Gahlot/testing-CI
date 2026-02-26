@@ -49,3 +49,7 @@ export const nestedFunction = (a: number, b: number): number => {
   }
   return a + b;
 }
+
+export const isEven = (a: number): boolean => {
+  return a % 2 === 0;
+}
