@@ -3,11 +3,11 @@
 
 // 2. IMPORTS
 import { describe, it, expect } from 'vitest';
-import { combine } from '../combinator';
+import { combineAndAddOne } from '../combinator';
 
 // 4. TESTS
 
-describe('combine', () => {
+describe('combineAndAddOne', () => {
   // This function: returns the sum of a and b, plus 1.
   // It calls: no dependencies (pure function).
   // I will only mock: nothing (pure arithmetic).
@@ -19,7 +19,7 @@ describe('combine', () => {
     const b = 3;
 
     // ACT
-    const result = combine(a, b);
+    const result = combineAndAddOne(a, b);
 
     // ASSERT
     expect(result).toBe(6);
@@ -31,7 +31,7 @@ describe('combine', () => {
     const b = 0;
 
     // ACT
-    const result = combine(a, b);
+    const result = combineAndAddOne(a, b);
 
     // ASSERT
     expect(result).toBe(1);
@@ -43,7 +43,7 @@ describe('combine', () => {
     const b = -3;
 
     // ACT
-    const result = combine(a, b);
+    const result = combineAndAddOne(a, b);
 
     // ASSERT
     expect(result).toBe(-4);
@@ -55,7 +55,7 @@ describe('combine', () => {
     const b = 3;
 
     // ACT
-    const result = combine(a, b);
+    const result = combineAndAddOne(a, b);
 
     // ASSERT
     expect(result).toBe(-6);
@@ -67,7 +67,7 @@ describe('combine', () => {
     const b = 0.2;
 
     // ACT
-    const result = combine(a, b);
+    const result = combineAndAddOne(a, b);
 
     // ASSERT
     // Use toBeCloseTo for floating point arithmetic.
