@@ -15,6 +15,8 @@ interface AIReviewConfig {
   maxDiffTokens: number;
   // Only review files under these directories. Empty array means review all source files.
   reviewRoots: string[];
+  // Never review files under these directories, even if they match reviewRoots.
+  excludePaths: string[];
 }
 
 const CONFIG: AIReviewConfig = {
@@ -26,6 +28,9 @@ const CONFIG: AIReviewConfig = {
   reviewRoots: process.env.REVIEW_ROOTS
     ? process.env.REVIEW_ROOTS.split(",").map((r) => r.trim())
     : ["src"],
+  excludePaths: process.env.EXCLUDE_PATHS
+    ? process.env.EXCLUDE_PATHS.split(",").map((r) => r.trim())
+    : [],
 };
 
 // ============================================================================
@@ -115,6 +120,10 @@ function parseDiffIntoFileHunks(rawDiff: string): DiffHunk[] {
       CONFIG.reviewRoots.length > 0 &&
       !CONFIG.reviewRoots.some((root) => file.startsWith(root + "/") || file === root)
     ) {
+      continue;
+    }
+    // Skip explicitly excluded paths
+    if (CONFIG.excludePaths.some((ex) => file.startsWith(ex + "/") || file === ex || file.includes("/" + ex + "/"))) {
       continue;
     }
 
