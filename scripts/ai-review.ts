@@ -13,6 +13,8 @@ interface AIReviewConfig {
   temperature: number;
   criticalSeverities: string[];
   maxDiffTokens: number;
+  // Only review files under these directories. Empty array means review all source files.
+  reviewRoots: string[];
 }
 
 const CONFIG: AIReviewConfig = {
@@ -21,6 +23,9 @@ const CONFIG: AIReviewConfig = {
   temperature: 0.2,
   criticalSeverities: ["critical", "high"],
   maxDiffTokens: 30000,
+  reviewRoots: process.env.REVIEW_ROOTS
+    ? process.env.REVIEW_ROOTS.split(",").map((r) => r.trim())
+    : ["src"],
 };
 
 // ============================================================================
@@ -105,6 +110,13 @@ function parseDiffIntoFileHunks(rawDiff: string): DiffHunk[] {
     const file = fileMatch[1];
     // Skip binary files and non-source files
     if (!/\.(ts|tsx|js|jsx)$/.test(file)) continue;
+    // Skip files outside the configured review roots (if any roots are set)
+    if (
+      CONFIG.reviewRoots.length > 0 &&
+      !CONFIG.reviewRoots.some((root) => file.startsWith(root + "/") || file === root)
+    ) {
+      continue;
+    }
 
     hunks.push({ file, content: `diff --git ${section}` });
   }

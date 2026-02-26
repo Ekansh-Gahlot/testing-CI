@@ -56,4 +56,5 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REVIEW_ROOTS: "src"   # Comma-separated list of directories to review (e.g. "src,lib")
         run: yarn ai-review
