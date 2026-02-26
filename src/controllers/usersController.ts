@@ -31,10 +31,14 @@ export class AppError extends Error {
 // HELPERS
 // ============================================================================
 
-function hashPassword(password: string): string {
+function hashPassword(password: string): Promise<string> {
   const salt = crypto.randomBytes(16).toString("hex");
-  const hash = crypto.scryptSync(password, salt, 64).toString("hex");
-  return `${salt}:${hash}`;
+  return new Promise((resolve, reject) => {
+    crypto.scrypt(password, salt, 64, (err, hash) => {
+      if (err) reject(err);
+      else resolve(`${salt}:${hash.toString("hex")}`);
+    });
+  });
 }
 
 // ============================================================================
