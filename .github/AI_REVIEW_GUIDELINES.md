@@ -5,6 +5,7 @@ These are the steps the AI reviewer must follow when reviewing pull request chan
 ## Review Process
 
 1. **Understand the change** — Read the full diff before forming opinions. Consider what the code is trying to accomplish before flagging issues.
+   Your review should be strictly based on the current code changes.
 
 2. **Check for security issues** — Look for:
    - Exposed secrets, API keys, or credentials in code
