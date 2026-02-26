@@ -149,19 +149,24 @@ describe('subtract', () => {
 
 
 describe('multiply', () => {
-  it('should_return_product_when_given_positive_numbers', () => {
+  // This function: validates numeric inputs (and a specific sign combination) then returns the product.
+  // It calls: no dependencies (pure function).
+  // I will only mock: nothing (no external effects).
+  // Edge cases to cover: non-number args, a>0 with b<0 branch, zero, negative*negative, decimal multiplication.
+
+  it('should_return_product_when_inputs_are_positive_integers', () => {
     // ARRANGE
-    const a = 3;
-    const b = 4;
+    const a = 2;
+    const b = 3;
 
     // ACT
     const result = multiply(a, b);
 
     // ASSERT
-    expect(result).toBe(12);
+    expect(result).toBe(6);
   });
 
-  it('should_return_zero_when_first_argument_is_zero', () => {
+  it('should_return_zero_when_one_argument_is_zero', () => {
     // ARRANGE
     const a = 0;
     const b = 999;
@@ -175,42 +180,53 @@ describe('multiply', () => {
 
   it('should_return_positive_product_when_both_arguments_are_negative', () => {
     // ARRANGE
-    const a = -3;
-    const b = -4;
+    const a = -4;
+    const b = -5;
 
     // ACT
     const result = multiply(a, b);
 
     // ASSERT
-    expect(result).toBe(12);
+    expect(result).toBe(20);
   });
 
-  it('should_throw_when_first_argument_is_not_a_number', () => {
+  it('should_return_product_when_argument_is_decimal', () => {
     // ARRANGE
-    const a = '3' as unknown as number;
-    const b = 4;
+    const a = 2.5;
+    const b = 2;
+
+    // ACT
+    const result = multiply(a, b);
+
+    // ASSERT
+    expect(result).toBe(5);
+  });
+
+  it('should_throw_error_when_any_argument_is_not_a_number', () => {
+    // ARRANGE
+    const a = '2' as unknown as number;
+    const b = 3;
 
     // ACT
     const act = () => multiply(a, b);
 
     // ASSERT
-    expect(act).toThrow(Error);
-    expect(act).toThrow('Both arguments must be numbers');
+    expect(act).toThrowError(new Error('Both arguments must be numbers'));
   });
 
-  it('should_throw_when_a_is_positive_and_b_is_negative', () => {
+  it('should_throw_error_when_a_is_positive_and_b_is_negative', () => {
     // ARRANGE
-    const a = 2;
-    const b = -3;
+    const a = 1;
+    const b = -1;
 
     // ACT
     const act = () => multiply(a, b);
 
     // ASSERT
-    expect(act).toThrow(Error);
-    expect(act).toThrow('Both arguments must be numbers');
+    expect(act).toThrowError(new Error('Both arguments must be numbers'));
   });
 });
+
 
 describe('nestedFunction', () => {
   it('should_return_negativeOne_when_aPositiveAndbNegative', () => {
