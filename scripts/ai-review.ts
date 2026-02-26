@@ -1,13 +1,14 @@
 import { execSync } from "child_process";
 import * as fs from "fs";
-import OpenAI from "openai";
 import { Octokit } from "@octokit/rest";
+import { createProvider, resolveApiKey, getDefaultModel, AIProvider, AIProviderConfig } from "./ai-providers";
 
 // ============================================================================
 // CONFIGURATION
 // ============================================================================
 
 interface AIReviewConfig {
+  provider: string;
   model: string;
   maxTokens: number;
   temperature: number;
@@ -19,8 +20,11 @@ interface AIReviewConfig {
   excludePaths: string[];
 }
 
+const AI_PROVIDER = (process.env.AI_PROVIDER || "openai").toLowerCase();
+
 const CONFIG: AIReviewConfig = {
-  model: "gpt-5.2",
+  provider: AI_PROVIDER,
+  model: process.env.AI_MODEL || getDefaultModel(AI_PROVIDER),
   maxTokens: 4096,
   temperature: 0.2,
   criticalSeverities: ["critical", "high"],
@@ -172,7 +176,7 @@ function buildDiffPositionMap(rawDiff: string): DiffPositionMap {
 }
 
 // ============================================================================
-// OPENAI INTEGRATION
+// AI PROVIDER INTEGRATION
 // ============================================================================
 
 const GUIDELINES_PATH = process.env.REVIEW_GUIDELINES_PATH || ".github/AI_REVIEW_GUIDELINES.md";
@@ -238,40 +242,41 @@ function chunkHunks(hunks: DiffHunk[]): DiffHunk[][] {
   return chunks;
 }
 
-async function callOpenAI(userPrompt: string): Promise<ReviewResult> {
-  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-  const response = await client.chat.completions.create({
-    model: CONFIG.model,
-    messages: [
-      { role: "system", content: loadSystemPrompt() },
-      { role: "user", content: userPrompt },
-    ],
-    max_completion_tokens: CONFIG.maxTokens,
-    temperature: CONFIG.temperature,
-    response_format: { type: "json_object" },
-  });
-
-  const content = response.choices[0]?.message?.content;
-  if (!content) {
-    throw new Error("Empty response from OpenAI");
+function initProvider(): AIProvider {
+  const apiKey = resolveApiKey(CONFIG.provider);
+  if (!apiKey) {
+    throw new Error(
+      `No API key found for provider "${CONFIG.provider}". ` +
+      `Set AI_API_KEY or the provider-specific key (OPENAI_API_KEY, ANTHROPIC_API_KEY, GOOGLE_API_KEY).`
+    );
   }
+  return createProvider(CONFIG.provider, apiKey);
+}
 
+async function callAI(provider: AIProvider, userPrompt: string): Promise<ReviewResult> {
+  const systemPrompt = loadSystemPrompt();
+  const providerConfig: AIProviderConfig = {
+    model: CONFIG.model,
+    maxTokens: CONFIG.maxTokens,
+    temperature: CONFIG.temperature,
+  };
+
+  const content = await provider.review(systemPrompt, userPrompt, providerConfig);
   const parsed = JSON.parse(content) as ReviewResult;
 
   if (!Array.isArray(parsed.issues) || typeof parsed.summary !== "string") {
-    throw new Error("Invalid response structure from OpenAI");
+    throw new Error(`Invalid response structure from ${CONFIG.provider}`);
   }
 
   return parsed;
 }
 
-async function reviewDiff(hunks: DiffHunk[]): Promise<ReviewResult> {
+async function reviewDiff(provider: AIProvider, hunks: DiffHunk[]): Promise<ReviewResult> {
   const chunks = chunkHunks(hunks);
 
   if (chunks.length === 1) {
     const userPrompt = buildUserPrompt(chunks[0]);
-    return callOpenAI(userPrompt);
+    return callAI(provider, userPrompt);
   }
 
   // Multiple chunks: review each and merge results
@@ -284,7 +289,7 @@ async function reviewDiff(hunks: DiffHunk[]): Promise<ReviewResult> {
   for (let i = 0; i < chunks.length; i++) {
     console.log(`  Reviewing chunk ${i + 1}/${chunks.length}...`);
     const userPrompt = buildUserPrompt(chunks[i]);
-    const result = await callOpenAI(userPrompt);
+    const result = await callAI(provider, userPrompt);
 
     allIssues.push(...result.issues);
     summaries.push(result.summary);
@@ -353,7 +358,7 @@ async function postReviewComments(
 
   // Build summary body (includes unmapped issues + overview)
   let summaryBody = `## 🤖 AI Code Review\n\n${result.summary}\n\n`;
-  summaryBody += `**Model**: ${CONFIG.model} | **Issues found**: ${result.issues.length}\n`;
+  summaryBody += `**Provider**: ${CONFIG.provider} | **Model**: ${CONFIG.model} | **Issues found**: ${result.issues.length}\n`;
 
   if (criticalCount > 0) {
     summaryBody += `**Critical/High issues**: ${criticalCount} ⛔ (CI will fail)\n`;
@@ -408,10 +413,11 @@ async function postReviewComments(
 
 async function main(): Promise<void> {
   console.log("🤖 AI Code Review - Starting...\n");
+  console.log(`   Provider: ${CONFIG.provider} | Model: ${CONFIG.model}\n`);
 
   // Validate environment
-  if (!process.env.OPENAI_API_KEY) {
-    console.log("⚠️  OPENAI_API_KEY is not set. Skipping AI review.");
+  if (!resolveApiKey(CONFIG.provider)) {
+    console.log(`⚠️  No API key found for provider "${CONFIG.provider}". Skipping AI review.`);
     process.exit(0);
   }
   if (!process.env.GITHUB_TOKEN) {
@@ -422,6 +428,9 @@ async function main(): Promise<void> {
     console.log("ℹ️  Not running in GitHub Actions. Skipping AI review.");
     process.exit(0);
   }
+
+  // Initialize AI provider
+  const provider = initProvider();
 
   // Get PR info
   const prInfo = getPRInfo();
@@ -442,11 +451,11 @@ async function main(): Promise<void> {
   }
   console.log(`📄 Found changes in ${hunks.length} source file(s)\n`);
 
-  // Call OpenAI for review
-  console.log("🔍 Sending code to AI for review...");
+  // Send to AI for review
+  console.log(`🔍 Sending code to ${CONFIG.provider} (${CONFIG.model}) for review...`);
   let result: ReviewResult;
   try {
-    result = await reviewDiff(hunks);
+    result = await reviewDiff(provider, hunks);
   } catch (error: any) {
     console.error(`⚠️  AI review failed: ${error.message}`);
     console.log("Skipping AI review due to API error. CI will not fail.");
