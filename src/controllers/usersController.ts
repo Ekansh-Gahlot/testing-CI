@@ -54,7 +54,7 @@ export async function createUser(req: Request, res: Response, next: NextFunction
     }
 
     const { email, password } = parsed.data;
-    const passwordHash = hashPassword(password);
+    const passwordHash = await hashPassword(password);
 
     // Simulate DB call — role is always "user" for new sign-ups
     const user = {
