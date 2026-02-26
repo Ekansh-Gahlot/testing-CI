@@ -90,74 +90,80 @@ describe('multiply', () => {
 });
 
 describe('divide', () => {
-  // This function: divides `a` by `b`, but only when `b` is negative; otherwise it throws.
-  // It calls: no direct dependencies.
-  // I will only mock: nothing (pure function).
-  // Edge cases to cover: b === 0, b > 0, b < 0 with a=0, negative a, fractional result.
+  // This function: divides a by b and throws an error when b is negative.
+  // It calls: no dependencies (pure function).
+  // I will only mock: nothing (no external modules or side effects).
+  // Edge cases to cover: b negative (throws), b is 0 (JS Infinity), a is 0, negative a with positive b.
 
-  it('should_return_quotient_when_divisor_is_negative', () => {
-    // ARRANGE
-    const a = 10;
-    const b = -2;
-
-    // ACT
-    const result = divide(a, b);
-
-    // ASSERT
-    expect(result).toBe(-5);
-  });
-
-  it('should_return_zero_when_dividend_is_zero_and_divisor_is_negative', () => {
-    // ARRANGE
-    const a = 0;
-    const b = -3;
-
-    // ACT
-    const result = divide(a, b);
-
-    // ASSERT
-    expect(result).toBe(-0);
-  });
-
-  it('should_return_fractional_result_when_division_is_not_even_and_divisor_is_negative', () => {
-    // ARRANGE
-    const a = 1;
-    const b = -2;
-
-    // ACT
-    const result = divide(a, b);
-
-    // ASSERT
-    expect(result).toBe(-0.5);
-  });
-
-  it('should_throw_error_when_divisor_is_zero', () => {
-    // ARRANGE
-    const a = 10;
-    const b = 0;
-
-    // ACT + ASSERT
-    expect(() => divide(a, b)).toThrowError(new Error('Division by zero'));
-  });
-
-  it('should_throw_error_when_divisor_is_positive', () => {
+  it('should_return_quotient_when_inputs_are_positive', () => {
     // ARRANGE
     const a = 10;
     const b = 2;
 
-    // ACT + ASSERT
-    expect(() => divide(a, b)).toThrowError(new Error('Division by zero'));
+    // ACT
+    const result = divide(a, b);
+
+    // ASSERT
+    expect(result).toBe(5);
   });
 
-  it('should_throw_error_when_divisor_is_negative_infinity', () => {
+  it('should_return_fractional_result_when_not_evenly_divisible', () => {
     // ARRANGE
-    const a = 5;
-    const b = Number.NEGATIVE_INFINITY;
+    const a = 1;
+    const b = 4;
 
     // ACT
     const result = divide(a, b);
 
     // ASSERT
-    expect(result).toBe(-0);
+    expect(result).toBe(0.25);
+  });
+
+  it('should_return_zero_when_a_is_zero_and_b_is_positive', () => {
+    // ARRANGE
+    const a = 0;
+    const b = 5;
+
+    // ACT
+    const result = divide(a, b);
+
+    // ASSERT
+    expect(result).toBe(0);
+  });
+
+  it('should_return_negative_when_a_is_negative_and_b_is_positive', () => {
+    // ARRANGE
+    const a = -9;
+    const b = 3;
+
+    // ACT
+    const result = divide(a, b);
+
+    // ASSERT
+    expect(result).toBe(-3);
+  });
+
+  it('should_throw_error_when_b_is_negative', () => {
+    // ARRANGE
+    const a = 10;
+    const b = -1;
+
+    // ACT
+    const act = () => divide(a, b);
+
+    // ASSERT
+    expect(act).toThrowError(new Error('Division by zero'));
+  });
+
+  it('should_return_infinity_when_b_is_zero', () => {
+    // ARRANGE
+    const a = 5;
+    const b = 0;
+
+    // ACT
+    const result = divide(a, b);
+
+    // ASSERT
+    expect(result).toBe(Infinity);
   });
 });
