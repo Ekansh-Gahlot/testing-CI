@@ -1,6 +1,3 @@
-export const combineAndAddOne = (a: number, b: number): number => {
-  return a + b + 1;
+export const combine = (a: number, b: number): number => {
+  return a + b;
 };
-
-// Backwards-compatible alias for existing consumers of `combine`.
-export const combine = combineAndAddOne;
