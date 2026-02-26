@@ -1,7 +1,11 @@
 // 1. MOCKS (before ANY imports)
-vi.mock('crypto', () => {
+vi.mock('crypto', async () => {
+  const actual = await vi.importActual<typeof import('crypto')>('crypto');
+
   return {
+    ...actual,
     default: {
+      ...actual.default,
       randomUUID: vi.fn(),
     },
   };
@@ -18,11 +22,6 @@ const mockCrypto = vi.mocked(crypto);
 
 
 describe('createUser', () => {
-  // This function: validates the request body, builds a user object, logs, and responds with 201 + user.
-  // It calls: createUserSchema.safeParse, crypto.randomUUID, req.log.info, res.status(...).json(...), next(err).
-  // I will only mock: crypto.randomUUID (external module + nondeterministic). Everything else is pure in-function behavior.
-  // Edge cases to cover: schema validation failure, missing/invalid email, short password, default role, dependency throw.
-
   const makeReqResNext = (body: unknown) => {
     const req = {
       body,
@@ -65,14 +64,13 @@ describe('createUser', () => {
     expect(res.json).toHaveBeenCalledTimes(1);
     const jsonArg = (vi.mocked(res.json).mock.calls[0] as unknown[])[0] as {
       success: boolean;
-      data: { id: string; email: string; role: string; createdAt: Date };
+      data: { id: string; email: string; createdAt: Date };
     };
 
     expect(jsonArg.success).toBe(true);
     expect(jsonArg.data).toMatchObject({
       id: 'uuid-test-1',
       email: 'a@example.com',
-      role: 'admin',
     });
     expect(jsonArg.data.createdAt).toBeInstanceOf(Date);
 
@@ -80,10 +78,10 @@ describe('createUser', () => {
     expect(req.log.info).toHaveBeenCalledTimes(1);
   });
 
-  it('should_default_role_to_user_when_role_is_omitted', async () => {
+  it('should_return_only_safe_fields_when_payload_is_valid', async () => {
     // ARRANGE
     const { req, res, next } = makeReqResNext({
-      email: 'b@example.com',
+      email: 'safe@example.com',
       password: 'password123',
     });
 
@@ -95,13 +93,30 @@ describe('createUser', () => {
 
     const jsonArg = (vi.mocked(res.json).mock.calls[0] as unknown[])[0] as {
       success: boolean;
-      data: { role: string };
+      data: Record<string, unknown>;
     };
 
-    expect(jsonArg).toMatchObject({
-      success: true,
-      data: { role: 'user' },
-    });
+    expect(jsonArg.success).toBe(true);
+    expect(Object.keys(jsonArg.data).sort()).toEqual(['createdAt', 'email', 'id']);
+    expect(jsonArg.data).not.toHaveProperty('passwordHash');
+    expect(jsonArg.data).not.toHaveProperty('role');
+  });
+
+  it('should_call_next_with_AppError_when_body_is_undefined', async () => {
+    // ARRANGE
+    const { req, res, next } = makeReqResNext(undefined);
+
+    // ACT
+    await createUser(req, res, next);
+
+    // ASSERT
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
+
+    expect(next).toHaveBeenCalledTimes(1);
+    const err = (vi.mocked(next).mock.calls[0] as unknown[])[0] as Error & { statusCode?: number };
+    expect(err.message).toBe('Invalid request payload');
+    expect(err.statusCode).toBe(400);
   });
 
   it('should_call_next_with_AppError_when_email_is_invalid', async () => {

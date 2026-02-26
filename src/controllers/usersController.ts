@@ -6,10 +6,10 @@ import { z } from "zod";
 // SCHEMA
 // ============================================================================
 
+// Role is NOT accepted from the client — assigned server-side to prevent privilege escalation
 export const createUserSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
-  role: z.enum(["admin", "user"]).default("user"),
 });
 
 // ============================================================================
@@ -28,6 +28,16 @@ export class AppError extends Error {
 }
 
 // ============================================================================
+// HELPERS
+// ============================================================================
+
+function hashPassword(password: string): string {
+  const salt = crypto.randomBytes(16).toString("hex");
+  const hash = crypto.scryptSync(password, salt, 64).toString("hex");
+  return `${salt}:${hash}`;
+}
+
+// ============================================================================
 // HANDLERS
 // ============================================================================
 
@@ -39,21 +49,28 @@ export async function createUser(req: Request, res: Response, next: NextFunction
       throw new AppError("Invalid request payload", 400);
     }
 
-    const { email, role } = parsed.data;
+    const { email, password } = parsed.data;
+    const passwordHash = hashPassword(password);
 
-    // Simulate DB call
+    // Simulate DB call — role is always "user" for new sign-ups
     const user = {
       id: crypto.randomUUID(),
       email,
-      role,
+      passwordHash,
+      role: "user" as const,
       createdAt: new Date(),
     };
 
     req.log.info({ userId: user.id }, "User created");
 
+    // Return only safe fields — never expose passwordHash or internal flags
     res.status(201).json({
       success: true,
-      data: user,
+      data: {
+        id: user.id,
+        email: user.email,
+        createdAt: user.createdAt,
+      },
     });
   } catch (err) {
     next(err);
