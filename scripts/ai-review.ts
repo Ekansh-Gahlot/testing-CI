@@ -235,7 +235,7 @@ async function callOpenAI(userPrompt: string): Promise<ReviewResult> {
       { role: "system", content: SYSTEM_PROMPT },
       { role: "user", content: userPrompt },
     ],
-    max_tokens: CONFIG.maxTokens,
+    max_completion_tokens: CONFIG.maxTokens,
     temperature: CONFIG.temperature,
     response_format: { type: "json_object" },
   });
