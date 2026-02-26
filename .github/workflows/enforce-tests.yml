@@ -67,6 +67,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REVIEW_GUIDELINES_PATH: ".github/AI_REVIEW_GUIDELINE.md" # Path to custom review guidelines
           REVIEW_ROOTS: "src" # Comma-separated dirs to review (e.g. "src,lib")
           EXCLUDE_PATHS: "src/tests" # Comma-separated dirs/paths to skip (e.g. "src/generated,src/mocks")
         run: yarn ai-review
