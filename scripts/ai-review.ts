@@ -175,38 +175,29 @@ function buildDiffPositionMap(rawDiff: string): DiffPositionMap {
 // OPENAI INTEGRATION
 // ============================================================================
 
-const SYSTEM_PROMPT = `You are an expert code reviewer for a TypeScript/Node.js project using Vitest.
+const GUIDELINES_PATH = process.env.REVIEW_GUIDELINES_PATH || ".github/AI_REVIEW_GUIDELINES.md";
+
+const FALLBACK_SYSTEM_PROMPT = `You are an expert code reviewer for a TypeScript/Node.js project.
 Review the following code changes from a pull request for production readiness.
-
-For each issue found, respond with a JSON object in the following exact schema:
+Check for: security issues, missing error handling, hardcoded secrets, performance problems, and TypeScript best practices.
+Respond ONLY with valid JSON matching this schema:
 {
-  "issues": [
-    {
-      "file": "path/to/file.ts",
-      "line": <line number in the new file>,
-      "severity": "critical" | "high" | "medium" | "low" | "info",
-      "category": "security" | "performance" | "error-handling" | "best-practice" | "production-readiness",
-      "message": "Description of the issue",
-      "suggestion": "Optional suggested fix"
-    }
-  ],
-  "summary": "Overall summary of the review in 2-4 sentences.",
-  "overallAssessment": "approve" | "request-changes" | "comment"
+  "issues": [{ "file": "...", "line": <number>, "severity": "critical|high|medium|low|info", "category": "security|performance|error-handling|best-practice|production-readiness", "message": "...", "suggestion": "..." }],
+  "summary": "2-4 sentence summary.",
+  "overallAssessment": "approve|request-changes|comment"
 }
+Use "request-changes" only for critical or high severity issues. No markdown outside the JSON.`;
 
-Severity definitions:
-- critical: Security vulnerabilities, data loss risks, crashes in production. MUST be fixed before merge.
-- high: Serious bugs, missing error handling that will cause failures, exposed secrets. Should be fixed before merge.
-- medium: Performance issues, code smells, missing edge cases. Should be addressed.
-- low: Style issues, minor improvements, optional refactoring.
-- info: Observations, positive feedback, educational notes.
-
-Rules:
-- Only flag real issues. Do not invent problems.
-- "line" must reference a line number that exists in the NEW version of the file (the + side of the diff).
-- Use "request-changes" as overallAssessment only if there are critical or high severity issues.
-- If the code looks good, use "approve" with an empty issues array.
-- Respond ONLY with valid JSON. No markdown, no explanation outside the JSON.`;
+function loadSystemPrompt(): string {
+  try {
+    const content = fs.readFileSync(GUIDELINES_PATH, "utf-8");
+    console.log(`  📋 Loaded review guidelines from ${GUIDELINES_PATH}`);
+    return content;
+  } catch {
+    console.warn(`  ⚠️  ${GUIDELINES_PATH} not found, using built-in guidelines.`);
+    return FALLBACK_SYSTEM_PROMPT;
+  }
+}
 
 function buildUserPrompt(hunks: DiffHunk[]): string {
   let prompt = "Review the following code changes:\n\n";
@@ -253,7 +244,7 @@ async function callOpenAI(userPrompt: string): Promise<ReviewResult> {
   const response = await client.chat.completions.create({
     model: CONFIG.model,
     messages: [
-      { role: "system", content: SYSTEM_PROMPT },
+      { role: "system", content: loadSystemPrompt() },
       { role: "user", content: userPrompt },
     ],
     max_completion_tokens: CONFIG.maxTokens,
