@@ -25,19 +25,13 @@ These are the steps the AI reviewer must follow when reviewing pull request chan
    - Environment-specific config read from env vars, not hardcoded
    - Graceful degradation when external services are unavailable
 
-5. **Check performance** — Flag obvious bottlenecks:
-   - N+1 query patterns (loops that make DB/API calls)
-   - Missing pagination on endpoints that return unbounded lists
-   - Synchronous blocking operations on the main thread
-   - Unnecessary re-computation inside hot paths
-
-6. **Check for best practices** — TypeScript/Node.js specifics:
+5. **Check for best practices** — TypeScript/Node.js specifics:
    - Avoid `any` types where a specific type can be inferred
    - Exported functions should have explicit return types
    - Prefer `const` over `let` where the variable is not reassigned
    - Avoid mutating function parameters
 
-7. **Do not flag** — Skip these, they are out of scope:
+6. **Do not flag** — Skip these, they are out of scope:
    - Code style preferences (indentation, quotes, semicolons)
    - Minor naming conventions unless severely misleading
    - Refactoring suggestions unrelated to correctness or safety
