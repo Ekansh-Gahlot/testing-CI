@@ -90,16 +90,12 @@ describe('multiply', () => {
 });
 
 describe('divide', () => {
-  // This function: divides a by b and throws when b is 0.
-  // It calls: no dependencies.
-  // I will only mock: nothing (pure function).
-  // Edge cases to cover: division by zero, negative numbers, floating point results.
+  // This function: divides two numbers and throws a "Division by zero" error when b is 0 (or on any internal error).
+  // It calls: no dependencies (pure function).
+  // I will only mock: nothing (no external modules, no side effects).
+  // Edge cases to cover: b===0, a===0, negative numbers, fractional results, negative zero.
 
-  beforeEach(() => {
-    // clearMocks: true in config handles cleanup
-  });
-
-  it('should_return_quotient_when_divisor_is_nonzero', () => {
+  it('should_return_quotient_when_inputs_are_valid_integers', () => {
     // ARRANGE
     const a = 10;
     const b = 2;
@@ -111,7 +107,19 @@ describe('divide', () => {
     expect(result).toBe(5);
   });
 
-  it('should_return_negative_when_operands_have_opposite_signs', () => {
+  it('should_return_fractional_result_when_division_is_not_even', () => {
+    // ARRANGE
+    const a = 1;
+    const b = 2;
+
+    // ACT
+    const result = divide(a, b);
+
+    // ASSERT
+    expect(result).toBe(0.5);
+  });
+
+  it('should_return_negative_result_when_operands_have_opposite_signs', () => {
     // ARRANGE
     const a = -9;
     const b = 3;
@@ -123,22 +131,10 @@ describe('divide', () => {
     expect(result).toBe(-3);
   });
 
-  it('should_return_positive_when_both_operands_are_negative', () => {
-    // ARRANGE
-    const a = -8;
-    const b = -2;
-
-    // ACT
-    const result = divide(a, b);
-
-    // ASSERT
-    expect(result).toBe(4);
-  });
-
-  it('should_return_zero_when_numerator_is_zero', () => {
+  it('should_return_zero_when_numerator_is_zero_and_denominator_is_nonzero', () => {
     // ARRANGE
     const a = 0;
-    const b = 5;
+    const b = 7;
 
     // ACT
     const result = divide(a, b);
@@ -147,27 +143,21 @@ describe('divide', () => {
     expect(result).toBe(0);
   });
 
-  it('should_return_decimal_when_division_is_not_even', () => {
+  it('should_throw_division_by_zero_error_when_denominator_is_zero', () => {
     // ARRANGE
-    const a = 1;
-    const b = 4;
-
-    // ACT
-    const result = divide(a, b);
-
-    // ASSERT
-    expect(result).toBe(0.25);
-  });
-
-  it('should_throw_error_when_divisor_is_zero', () => {
-    // ARRANGE
-    const a = 10;
+    const a = 123;
     const b = 0;
 
-    // ACT
-    const act = () => divide(a, b);
+    // ACT + ASSERT
+    expect(() => divide(a, b)).toThrowError(new Error('Division by zero'));
+  });
 
-    // ASSERT
-    expect(act).toThrowError(new Error('Division by zero'));
+  it('should_throw_division_by_zero_error_when_denominator_is_negative_zero', () => {
+    // ARRANGE
+    const a = 123;
+    const b = -0;
+
+    // ACT + ASSERT
+    expect(() => divide(a, b)).toThrowError(new Error('Division by zero'));
   });
 });
