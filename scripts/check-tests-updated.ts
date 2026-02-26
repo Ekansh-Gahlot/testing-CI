@@ -475,6 +475,21 @@ function findTestFile(sourceFile: string): string | null {
     }
   }
 
+  // Mirror-path search: <root>/tests/<relativeSubdir>/<name>.test.<ext>
+  // Handles structures like src/tests/controllers/usersController.test.ts
+  // for a source file at src/controllers/usersController.ts
+  for (const root of CONFIG.testSearchRoots) {
+    if (!sourceFile.startsWith(root + "/")) continue;
+    const relativeSubdir = path.dirname(sourceFile.slice(root.length + 1)); // e.g. "controllers"
+    if (relativeSubdir === ".") continue; // already covered above
+    for (const srcExt of CONFIG.sourceExtensions) {
+      const mirrored = path.join(root, "tests", relativeSubdir, `${nameWithoutExt}.test${srcExt}`);
+      if (fs.existsSync(mirrored)) return mirrored;
+      const mirroredSpec = path.join(root, "tests", relativeSubdir, `${nameWithoutExt}.spec${srcExt}`);
+      if (fs.existsSync(mirroredSpec)) return mirroredSpec;
+    }
+  }
+
   return null;
 }
 
