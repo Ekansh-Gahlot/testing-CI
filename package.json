@@ -5,14 +5,17 @@
   "scripts": {
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "check-tests": "ts-node scripts/check-tests-updated.ts"
+    "check-tests": "ts-node scripts/check-tests-updated.ts",
+    "ai-review": "ts-node scripts/ai-review.ts"
   },
   "devDependencies": {
     "@babel/parser": "^7.23.0",
     "@babel/traverse": "^7.23.0",
+    "@octokit/rest": "^21.0.0",
     "@types/babel__traverse": "^7.20.0",
     "@types/node": "^20.0.0",
     "@vitest/coverage-v8": "^2.1.9",
+    "openai": "^4.73.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.0",
     "vitest": "^2.1.9"
