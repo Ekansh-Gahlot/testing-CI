@@ -38,6 +38,9 @@ const CONFIG: Config = {
     "build/",
     ".test.",
     ".spec.",
+    ...(process.env.TEST_EXCLUDE_PATHS
+      ? process.env.TEST_EXCLUDE_PATHS.split(",").map((p) => p.trim())
+      : []),
   ],
   skipLabel: "no-test-needed",
   coverageThreshold: 70,

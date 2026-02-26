@@ -4,6 +4,8 @@
 // 2. IMPORTS
 import { describe, it, expect } from 'vitest';
 import { add, subtract, multiply, nestedFunction } from '../math';
+import { isEven } from '../math';
+
 
 // 4. TESTS
 // Updated to match new validation logic
@@ -290,7 +292,75 @@ describe('nestedFunction', () => {
   });
 });
 
+describe('isEven', () => {
+  // This function: returns true when the provided number is even (divisible by 2), otherwise false.
+  // It calls: no dependencies (pure arithmetic).
+  // I will only mock: nothing (pure function).
+  // Edge cases to cover: 0, negative numbers, non-integers, large numbers.
 
+  it('should_return_true_when_number_is_even', () => {
+    // ARRANGE
+    const input = 4;
 
+    // ACT
+    const result = isEven(input);
 
+    // ASSERT
+    expect(result).toBe(true);
+  });
 
+  it('should_return_false_when_number_is_odd', () => {
+    // ARRANGE
+    const input = 5;
+
+    // ACT
+    const result = isEven(input);
+
+    // ASSERT
+    expect(result).toBe(false);
+  });
+
+  it('should_return_true_when_number_is_zero', () => {
+    // ARRANGE
+    const input = 0;
+
+    // ACT
+    const result = isEven(input);
+
+    // ASSERT
+    expect(result).toBe(true);
+  });
+
+  it('should_return_true_when_number_is_negative_even', () => {
+    // ARRANGE
+    const input = -12;
+
+    // ACT
+    const result = isEven(input);
+
+    // ASSERT
+    expect(result).toBe(true);
+  });
+
+  it('should_return_false_when_number_is_negative_odd', () => {
+    // ARRANGE
+    const input = -7;
+
+    // ACT
+    const result = isEven(input);
+
+    // ASSERT
+    expect(result).toBe(false);
+  });
+
+  it('should_return_false_when_number_is_non_integer_and_not_divisible_by_two', () => {
+    // ARRANGE
+    const input = 2.5;
+
+    // ACT
+    const result = isEven(input);
+
+    // ASSERT
+    expect(result).toBe(false);
+  });
+});

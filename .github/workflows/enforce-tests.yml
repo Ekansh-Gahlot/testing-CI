@@ -33,6 +33,8 @@ jobs:
           echo "PR_LABELS=${{ join(github.event.pull_request.labels.*.name, ',') }}" >> $GITHUB_ENV
 
       - name: Run test update check
+        env:
+          TEST_EXCLUDE_PATHS: "scripts,src/config" # Comma-separated paths to skip test enforcement (e.g. "scripts,src/config,src/types")
         run: yarn check-tests
 
   ai-review:
@@ -56,7 +58,14 @@ jobs:
 
       - name: AI Code Review
         env:
+          # Provider config: set AI_PROVIDER to "openai", "anthropic", or "google"
+          AI_PROVIDER: ${{ vars.AI_PROVIDER || 'openai' }}
+          AI_MODEL: ${{ vars.AI_MODEL || '' }} # Leave empty for provider default
+          AI_API_KEY: ${{ secrets.AI_API_KEY }}
+          # Fallback: provider-specific keys (used if AI_API_KEY is not set)
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REVIEW_ROOTS: "src" # Comma-separated dirs to review (e.g. "src,lib")
           EXCLUDE_PATHS: "src/tests" # Comma-separated dirs/paths to skip (e.g. "src/generated,src/mocks")
