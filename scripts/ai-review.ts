@@ -343,56 +343,72 @@ async function postReviewComments(
   const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
   const positionMap = buildDiffPositionMap(rawDiff);
 
-  const inlineComments: Array<{ path: string; position: number; body: string }> = [];
+  const criticalCount = result.issues.filter(
+    (i) => CONFIG.criticalSeverities.includes(i.severity)
+  ).length;
+
+  // Separate issues into mapped (can be inline) and unmapped (summary only)
+  const mappedIssues: Array<{ issue: ReviewIssue; position: number }> = [];
   const unmappedIssues: ReviewIssue[] = [];
 
   for (const issue of result.issues) {
-    const key = `${issue.file}:${issue.line}`;
-    const position = positionMap[key];
-    const commentBody = formatIssueComment(issue);
-
+    const position = positionMap[`${issue.file}:${issue.line}`];
     if (position) {
-      inlineComments.push({
-        path: issue.file,
-        position,
-        body: commentBody,
-      });
+      mappedIssues.push({ issue, position });
     } else {
       unmappedIssues.push(issue);
     }
   }
 
-  // Build summary body
+  // Build summary body (includes unmapped issues + overview)
   let summaryBody = `## 🤖 AI Code Review\n\n${result.summary}\n\n`;
-  summaryBody += `**Model**: ${CONFIG.model}\n`;
-  summaryBody += `**Issues found**: ${result.issues.length}\n`;
-
-  const criticalCount = result.issues.filter(
-    (i) => CONFIG.criticalSeverities.includes(i.severity)
-  ).length;
+  summaryBody += `**Model**: ${CONFIG.model} | **Issues found**: ${result.issues.length}\n`;
 
   if (criticalCount > 0) {
     summaryBody += `**Critical/High issues**: ${criticalCount} ⛔ (CI will fail)\n`;
   }
 
   if (unmappedIssues.length > 0) {
-    summaryBody += `\n### Additional Issues\n\n`;
+    summaryBody += `\n### Issues (could not be mapped to diff lines)\n\n`;
     for (const issue of unmappedIssues) {
-      summaryBody += `- ${formatIssueComment(issue)}\n`;
+      summaryBody += `- **[${issue.severity.toUpperCase()}]** \`${issue.file}:${issue.line}\` — ${issue.message}\n`;
+      if (issue.suggestion) {
+        summaryBody += `  > Suggestion: ${issue.suggestion}\n`;
+      }
     }
   }
 
-  const event = criticalCount > 0 ? "REQUEST_CHANGES" as const : "COMMENT" as const;
-
+  // Post summary review (no inline comments — avoids batch 422 failures)
   await octokit.pulls.createReview({
     owner: prInfo.owner,
     repo: prInfo.repo,
     pull_number: prInfo.pullNumber,
     commit_id: prInfo.headSha,
     body: summaryBody,
-    event,
-    comments: inlineComments,
+    event: "COMMENT" as const,
   });
+
+  // Post each inline comment individually so a bad position skips only that comment
+  let inlinePosted = 0;
+  for (const { issue, position } of mappedIssues) {
+    try {
+      await octokit.pulls.createReviewComment({
+        owner: prInfo.owner,
+        repo: prInfo.repo,
+        pull_number: prInfo.pullNumber,
+        commit_id: prInfo.headSha,
+        path: issue.file,
+        position,
+        body: formatIssueComment(issue),
+      });
+      inlinePosted++;
+    } catch (err: any) {
+      // Position couldn't be resolved — silently skip, already visible in summary
+      console.warn(`  ⚠️  Skipped inline comment for ${issue.file}:${issue.line} — ${err.message}`);
+    }
+  }
+
+  console.log(`  📝 Summary posted. Inline comments: ${inlinePosted}/${mappedIssues.length} placed.`);
 }
 
 // ============================================================================
