@@ -368,72 +368,80 @@ describe('isEven', () => {
 });
 
 describe('isOdd', () => {
-  // This function: returns true when a number is odd (a % 2 !== 0).
-  // It calls: no dependencies (pure arithmetic).
-  // I will only mock: nothing (pure function).
-  // Edge cases to cover: 0, negative numbers, fractional numbers, NaN/Infinity.
+  // This function: returns true when the input number is odd; otherwise false. Throws on NaN.
+  // It calls: isNaN (global).
+  // I will only mock: nothing (pure function; no external deps).
+  // Edge cases to cover: NaN, Infinity, negative numbers, non-integer numbers.
 
-  it('should_return_true_when_input_is_odd_positive_integer', () => {
+  it('should_return_true_when_number_is_odd', () => {
     // ARRANGE
-    const a = 3;
+    const input = 3;
 
     // ACT
-    const result = isOdd(a);
+    const result = isOdd(input);
 
     // ASSERT
     expect(result).toBe(true);
   });
 
-  it('should_return_false_when_input_is_even_positive_integer', () => {
+  it('should_return_false_when_number_is_even', () => {
     // ARRANGE
-    const a = 4;
+    const input = 4;
 
     // ACT
-    const result = isOdd(a);
+    const result = isOdd(input);
 
     // ASSERT
     expect(result).toBe(false);
   });
 
-  it('should_return_false_when_input_is_zero', () => {
+  it('should_return_true_when_number_is_negative_odd', () => {
     // ARRANGE
-    const a = 0;
+    const input = -7;
 
     // ACT
-    const result = isOdd(a);
+    const result = isOdd(input);
+
+    // ASSERT
+    expect(result).toBe(true);
+  });
+
+  it('should_return_false_when_number_is_zero', () => {
+    // ARRANGE
+    const input = 0;
+
+    // ACT
+    const result = isOdd(input);
 
     // ASSERT
     expect(result).toBe(false);
   });
 
-  it('should_return_true_when_input_is_odd_negative_integer', () => {
+  it('should_throw_error_when_input_is_NaN', () => {
     // ARRANGE
-    const a = -5;
+    const input = Number.NaN;
+
+    // ACT + ASSERT
+    expect(() => isOdd(input)).toThrowError(new Error('Input must be a number'));
+  });
+
+  it('should_return_true_when_input_is_infinity', () => {
+    // ARRANGE
+    const input = Number.POSITIVE_INFINITY;
 
     // ACT
-    const result = isOdd(a);
+    const result = isOdd(input);
 
     // ASSERT
     expect(result).toBe(true);
   });
 
-  it('should_return_true_when_input_is_fractional_with_odd_remainder', () => {
+  it('should_return_true_when_input_is_non_integer_odd_modulus', () => {
     // ARRANGE
-    const a = 3.5;
+    const input = 1.5;
 
     // ACT
-    const result = isOdd(a);
-
-    // ASSERT
-    expect(result).toBe(true);
-  });
-
-  it('should_return_true_when_input_is_NaN', () => {
-    // ARRANGE
-    const a = Number.NaN;
-
-    // ACT
-    const result = isOdd(a);
+    const result = isOdd(input);
 
     // ASSERT
     expect(result).toBe(true);

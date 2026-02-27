@@ -441,6 +441,7 @@ async function main(): Promise<void> {
 
   // Get diff
   const rawDiff = getPRDiff(prInfo);
+  console.log("rawDiff", rawDiff);
   if (!rawDiff.trim()) {
     console.log("ℹ️  No diff found. Nothing to review.");
     process.exit(0);
