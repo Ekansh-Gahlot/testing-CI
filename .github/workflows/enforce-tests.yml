@@ -33,8 +33,6 @@ jobs:
           echo "PR_LABELS=${{ join(github.event.pull_request.labels.*.name, ',') }}" >> $GITHUB_ENV
 
       - name: Run test update check
-        env:
-          TEST_EXCLUDE_PATHS: "scripts,src/config" # Comma-separated paths to skip test enforcement (e.g. "scripts,src/config,src/types")
         run: yarn check-tests
 
   ai-review:
@@ -69,5 +67,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REVIEW_GUIDELINES_PATH: ".github/AI_REVIEW_GUIDELINES.md" # Path to custom review guidelines
           REVIEW_ROOTS: "src" # Comma-separated dirs to review (e.g. "src,lib")
-          EXCLUDE_PATHS: "src/tests" # Comma-separated dirs/paths to skip (e.g. "src/generated,src/mocks")
         run: yarn ai-review
