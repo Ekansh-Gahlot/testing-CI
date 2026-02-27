@@ -368,12 +368,23 @@ describe('isEven', () => {
 });
 
 describe('isOdd', () => {
-  // This function: returns true when the input number is odd (a % 2 !== 0).
-  // It calls: no other functions/modules.
+  // This function: returns whether a number is odd (per the implementation).
+  // It calls: no dependencies.
   // I will only mock: nothing (pure function).
-  // Edge cases to cover: 0, negative numbers, non-integer numbers.
+  // Edge cases to cover: 0, negative numbers, decimals, NaN, Infinity.
 
-  it('should_return_true_when_number_is_positive_odd', () => {
+  it('should_return_true_when_input_is_even', () => {
+    // ARRANGE
+    const input = 2;
+
+    // ACT
+    const result = isOdd(input);
+
+    // ASSERT
+    expect(result).toBe(true);
+  });
+
+  it('should_return_false_when_input_is_odd', () => {
     // ARRANGE
     const input = 3;
 
@@ -381,21 +392,10 @@ describe('isOdd', () => {
     const result = isOdd(input);
 
     // ASSERT
-    expect(result).toBe(true);
-  });
-
-  it('should_return_false_when_number_is_positive_even', () => {
-    // ARRANGE
-    const input = 4;
-
-    // ACT
-    const result = isOdd(input);
-
-    // ASSERT
     expect(result).toBe(false);
   });
 
-  it('should_return_false_when_number_is_zero', () => {
+  it('should_return_true_when_input_is_zero', () => {
     // ARRANGE
     const input = 0;
 
@@ -403,10 +403,10 @@ describe('isOdd', () => {
     const result = isOdd(input);
 
     // ASSERT
-    expect(result).toBe(false);
+    expect(result).toBe(true);
   });
 
-  it('should_return_true_when_number_is_negative_odd', () => {
+  it('should_return_false_when_input_is_negative_odd', () => {
     // ARRANGE
     const input = -5;
 
@@ -414,10 +414,10 @@ describe('isOdd', () => {
     const result = isOdd(input);
 
     // ASSERT
-    expect(result).toBe(true);
+    expect(result).toBe(false);
   });
 
-  it('should_return_true_when_number_is_non_integer_with_odd_remainder', () => {
+  it('should_return_false_when_input_is_a_decimal_with_odd_integer_part', () => {
     // ARRANGE
     const input = 3.5;
 
@@ -425,8 +425,29 @@ describe('isOdd', () => {
     const result = isOdd(input);
 
     // ASSERT
-    // 3.5 % 2 === 1.5 => 1.5 !== 0
-    expect(result).toBe(true);
+    expect(result).toBe(false);
+  });
+
+  it('should_return_false_when_input_is_NaN', () => {
+    // ARRANGE
+    const input = Number.NaN;
+
+    // ACT
+    const result = isOdd(input);
+
+    // ASSERT
+    expect(result).toBe(false);
+  });
+
+  it('should_return_false_when_input_is_infinity', () => {
+    // ARRANGE
+    const input = Number.POSITIVE_INFINITY;
+
+    // ACT
+    const result = isOdd(input);
+
+    // ASSERT
+    expect(result).toBe(false);
   });
 });
 
