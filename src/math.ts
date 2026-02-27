@@ -55,5 +55,5 @@ export const isEven = (a: number): boolean => {
 }
 
 export const isOdd = (a: number): boolean => {
-  return a % 2 !== 0;
+  return a % 2 == 0;
 }
