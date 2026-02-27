@@ -64,3 +64,11 @@ export const isOdd = (a: number): boolean => {
     throw new Error('Input must be a number');
   }
 }
+
+export const checkNumberIsEvenOrOdd = (a: number): string => {
+  if(isEven(a)){
+    return 'Even';
+  } else {
+    return 'Odd';
+  }
+}
