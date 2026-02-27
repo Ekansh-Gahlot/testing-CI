@@ -77,3 +77,11 @@ export const checkNumberIsPrime = (a: number): boolean => {
   }
   return true;
 }
+
+export const checkNumberIsPrimeOrNot = (a: number): string => {
+  if (checkNumberIsPrime(a)) {
+    return 'Prime';
+  } else {
+    return 'Not Prime';
+  }
+}
