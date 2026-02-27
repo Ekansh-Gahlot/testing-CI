@@ -209,6 +209,7 @@ function buildUserPrompt(hunks: DiffHunk[]): string {
   for (const hunk of hunks) {
     prompt += `### File: ${hunk.file}\n\`\`\`diff\n${hunk.content}\n\`\`\`\n\n`;
   }
+  console.log(prompt);
 
   return prompt;
 }
@@ -273,6 +274,8 @@ async function callAI(provider: AIProvider, userPrompt: string): Promise<ReviewR
 
 async function reviewDiff(provider: AIProvider, hunks: DiffHunk[]): Promise<ReviewResult> {
   const chunks = chunkHunks(hunks);
+  console.log("chunks", chunks);
+  console.log("hunks", hunks);
 
   if (chunks.length === 1) {
     const userPrompt = buildUserPrompt(chunks[0]);
@@ -438,6 +441,7 @@ async function main(): Promise<void> {
 
   // Get diff
   const rawDiff = getPRDiff(prInfo);
+  console.log("rawDiff", rawDiff);
   if (!rawDiff.trim()) {
     console.log("ℹ️  No diff found. Nothing to review.");
     process.exit(0);

@@ -6,6 +6,8 @@ import { describe, it, expect } from 'vitest';
 import { add, subtract, multiply, nestedFunction } from '../math';
 import { isEven } from '../math';
 import { isOdd } from '../math';
+import { checkNumberIsEvenOrOdd } from '../math';
+
 
 
 
@@ -368,12 +370,12 @@ describe('isEven', () => {
 });
 
 describe('isOdd', () => {
-  // This function: returns true when the input number is odd (a % 2 !== 0).
-  // It calls: no other functions/modules.
-  // I will only mock: nothing (pure function).
-  // Edge cases to cover: 0, negative numbers, non-integer numbers.
+  // This function: returns true when the input number is odd; otherwise false. Throws on NaN.
+  // It calls: isNaN (global).
+  // I will only mock: nothing (pure function; no external deps).
+  // Edge cases to cover: NaN, Infinity, negative numbers, non-integer numbers.
 
-  it('should_return_true_when_number_is_positive_odd', () => {
+  it('should_return_true_when_number_is_odd', () => {
     // ARRANGE
     const input = 3;
 
@@ -384,7 +386,7 @@ describe('isOdd', () => {
     expect(result).toBe(true);
   });
 
-  it('should_return_false_when_number_is_positive_even', () => {
+  it('should_return_false_when_number_is_even', () => {
     // ARRANGE
     const input = 4;
 
@@ -393,6 +395,17 @@ describe('isOdd', () => {
 
     // ASSERT
     expect(result).toBe(false);
+  });
+
+  it('should_return_true_when_number_is_negative_odd', () => {
+    // ARRANGE
+    const input = -7;
+
+    // ACT
+    const result = isOdd(input);
+
+    // ASSERT
+    expect(result).toBe(true);
   });
 
   it('should_return_false_when_number_is_zero', () => {
@@ -406,9 +419,17 @@ describe('isOdd', () => {
     expect(result).toBe(false);
   });
 
-  it('should_return_true_when_number_is_negative_odd', () => {
+  it('should_throw_error_when_input_is_NaN', () => {
     // ARRANGE
-    const input = -5;
+    const input = Number.NaN;
+
+    // ACT + ASSERT
+    expect(() => isOdd(input)).toThrowError(new Error('Input must be a number'));
+  });
+
+  it('should_return_true_when_input_is_infinity', () => {
+    // ARRANGE
+    const input = Number.POSITIVE_INFINITY;
 
     // ACT
     const result = isOdd(input);
@@ -417,16 +438,87 @@ describe('isOdd', () => {
     expect(result).toBe(true);
   });
 
-  it('should_return_true_when_number_is_non_integer_with_odd_remainder', () => {
+  it('should_return_true_when_input_is_non_integer_odd_modulus', () => {
     // ARRANGE
-    const input = 3.5;
+    const input = 1.5;
 
     // ACT
     const result = isOdd(input);
 
     // ASSERT
-    // 3.5 % 2 === 1.5 => 1.5 !== 0
     expect(result).toBe(true);
   });
 });
 
+describe('checkNumberIsEvenOrOdd', () => {
+  // This function: returns 'Even' when the input number is even, otherwise returns 'Odd'.
+  // It calls: isEven(a).
+  // I will only mock: nothing (both this function and isEven are pure utilities in the same module).
+  // Edge cases to cover: 0, negative numbers, non-integer numbers, NaN.
+
+  it('should_return_Even_when_number_is_even', () => {
+    // ARRANGE
+    const input = 2;
+
+    // ACT
+    const result = checkNumberIsEvenOrOdd(input);
+
+    // ASSERT
+    expect(result).toBe('Even');
+  });
+
+  it('should_return_Odd_when_number_is_odd', () => {
+    // ARRANGE
+    const input = 3;
+
+    // ACT
+    const result = checkNumberIsEvenOrOdd(input);
+
+    // ASSERT
+    expect(result).toBe('Odd');
+  });
+
+  it('should_return_Even_when_number_is_zero', () => {
+    // ARRANGE
+    const input = 0;
+
+    // ACT
+    const result = checkNumberIsEvenOrOdd(input);
+
+    // ASSERT
+    expect(result).toBe('Even');
+  });
+
+  it('should_return_Odd_when_number_is_negative_odd', () => {
+    // ARRANGE
+    const input = -7;
+
+    // ACT
+    const result = checkNumberIsEvenOrOdd(input);
+
+    // ASSERT
+    expect(result).toBe('Odd');
+  });
+
+  it('should_return_Odd_when_number_is_non_integer_and_not_divisible_by_two', () => {
+    // ARRANGE
+    const input = 2.5;
+
+    // ACT
+    const result = checkNumberIsEvenOrOdd(input);
+
+    // ASSERT
+    expect(result).toBe('Odd');
+  });
+
+  it('should_return_Odd_when_number_is_NaN', () => {
+    // ARRANGE
+    const input = Number.NaN;
+
+    // ACT
+    const result = checkNumberIsEvenOrOdd(input);
+
+    // ASSERT
+    expect(result).toBe('Odd');
+  });
+});

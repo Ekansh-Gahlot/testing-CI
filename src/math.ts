@@ -55,5 +55,20 @@ export const isEven = (a: number): boolean => {
 }
 
 export const isOdd = (a: number): boolean => {
-  return a % 2 !== 0;
+  try{
+    if(isNaN(a)){
+      throw new Error('Input must be a number');
+    }
+    return a % 2 !== 0;
+  } catch (error) {
+    throw new Error('Input must be a number');
+  }
+}
+
+export const checkNumberIsEvenOrOdd = (a: number): string => {
+  if(isEven(a)){
+    return 'Even';
+  } else {
+    return 'Odd';
+  }
 }
