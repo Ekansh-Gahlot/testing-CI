@@ -1,5 +1,6 @@
 import { execSync } from "child_process";
 import * as fs from "fs";
+import * as path from "path";
 import { Octokit } from "@octokit/rest";
 import { createProvider, resolveApiKey, getDefaultModel, AIProvider, AIProviderConfig } from "./ai-providers";
 
@@ -20,6 +21,17 @@ interface AIReviewConfig {
   excludePaths: string[];
 }
 
+function loadCiPolicy(key: "testExcludePaths" | "aiReviewExcludePaths"): string[] {
+  try {
+    const policyPath = path.resolve(__dirname, "../.github/ci-policy.json");
+    const policy = JSON.parse(fs.readFileSync(policyPath, "utf-8"));
+    if (Array.isArray(policy[key])) return policy[key];
+  } catch {
+    // ci-policy.json not found or malformed — fall back to empty
+  }
+  return [];
+}
+
 const AI_PROVIDER = (process.env.AI_PROVIDER || "openai").toLowerCase();
 
 const CONFIG: AIReviewConfig = {
@@ -32,9 +44,7 @@ const CONFIG: AIReviewConfig = {
   reviewRoots: process.env.REVIEW_ROOTS
     ? process.env.REVIEW_ROOTS.split(",").map((r) => r.trim())
     : ["src"],
-  excludePaths: process.env.EXCLUDE_PATHS
-    ? process.env.EXCLUDE_PATHS.split(",").map((r) => r.trim())
-    : [],
+  excludePaths: loadCiPolicy("aiReviewExcludePaths"),
 };
 
 // ============================================================================

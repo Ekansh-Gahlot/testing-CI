@@ -1,0 +1,4 @@
+{
+  "testExcludePaths": ["src/math.ts"],
+  "aiReviewExcludePaths": []
+}

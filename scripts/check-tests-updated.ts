@@ -23,6 +23,17 @@ interface Config {
   maxCommits: number;
 }
 
+function loadCiPolicy(key: "testExcludePaths" | "aiReviewExcludePaths"): string[] {
+  try {
+    const policyPath = path.resolve(__dirname, "../.github/ci-policy.json");
+    const policy = JSON.parse(fs.readFileSync(policyPath, "utf-8"));
+    if (Array.isArray(policy[key])) return policy[key];
+  } catch {
+    // ci-policy.json not found or malformed — fall back to empty
+  }
+  return [];
+}
+
 const CONFIG: Config = {
   sourceExtensions: [".ts", ".tsx", ".js", ".jsx"],
   testPatterns: [
@@ -38,9 +49,7 @@ const CONFIG: Config = {
     "build/",
     ".test.",
     ".spec.",
-    ...(process.env.TEST_EXCLUDE_PATHS
-      ? process.env.TEST_EXCLUDE_PATHS.split(",").map((p) => p.trim())
-      : []),
+    ...loadCiPolicy("testExcludePaths"),
   ],
   skipLabel: "no-test-needed",
   coverageThreshold: 70,

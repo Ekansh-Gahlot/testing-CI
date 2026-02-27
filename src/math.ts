@@ -57,3 +57,31 @@ export const isEven = (a: number): boolean => {
 export const isOdd = (a: number): boolean => {
   return a % 2 !== 0;
 }
+
+export const checkNumberIsEvenOrOdd = (a: number): string => {
+  if (isEven(a)) {
+    return 'Even';
+  } else {
+    return 'Odd';
+  }
+}
+
+export const checkNumberIsPrime = (a: number): boolean => {
+  if (a <= 1) {
+    return false;
+  }
+  for (let i = 2; i <= Math.sqrt(a); i++) {
+    if (a % i === 0) {
+      return false;
+    }
+  }
+  return true;
+}
+
+export const checkNumberIsPrimeOrNot = (a: number): string => {
+  if (checkNumberIsPrime(a)) {
+    return 'Prime';
+  } else {
+    return 'Not Prime';
+  }
+}
