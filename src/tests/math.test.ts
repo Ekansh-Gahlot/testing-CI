@@ -6,6 +6,8 @@ import { describe, it, expect } from 'vitest';
 import { add, subtract, multiply, nestedFunction } from '../math';
 import { isEven } from '../math';
 import { isOdd } from '../math';
+import { checkNumberIsEvenOrOdd } from '../math';
+
 
 
 
@@ -430,3 +432,75 @@ describe('isOdd', () => {
   });
 });
 
+describe('checkNumberIsEvenOrOdd', () => {
+  // This function: returns the string 'Even' or 'Odd' based on whether the provided number is even.
+  // It calls: isEven.
+  // I will only mock: nothing (isEven is a pure utility in the same module; test integration).
+  // Edge cases to cover: 0, negative numbers, non-integers, NaN.
+
+  it('should_return_Even_when_number_is_even', () => {
+    // ARRANGE
+    const input = 2;
+
+    // ACT
+    const result = checkNumberIsEvenOrOdd(input);
+
+    // ASSERT
+    expect(result).toBe('Even');
+  });
+
+  it('should_return_Odd_when_number_is_odd', () => {
+    // ARRANGE
+    const input = 3;
+
+    // ACT
+    const result = checkNumberIsEvenOrOdd(input);
+
+    // ASSERT
+    expect(result).toBe('Odd');
+  });
+
+  it('should_return_Even_when_number_is_zero', () => {
+    // ARRANGE
+    const input = 0;
+
+    // ACT
+    const result = checkNumberIsEvenOrOdd(input);
+
+    // ASSERT
+    expect(result).toBe('Even');
+  });
+
+  it('should_return_Odd_when_number_is_negative_odd', () => {
+    // ARRANGE
+    const input = -7;
+
+    // ACT
+    const result = checkNumberIsEvenOrOdd(input);
+
+    // ASSERT
+    expect(result).toBe('Odd');
+  });
+
+  it('should_return_Odd_when_number_is_non_integer_with_odd_remainder', () => {
+    // ARRANGE
+    const input = 2.5;
+
+    // ACT
+    const result = checkNumberIsEvenOrOdd(input);
+
+    // ASSERT
+    expect(result).toBe('Odd');
+  });
+
+  it('should_return_Odd_when_number_is_NaN', () => {
+    // ARRANGE
+    const input = Number.NaN;
+
+    // ACT
+    const result = checkNumberIsEvenOrOdd(input);
+
+    // ASSERT
+    expect(result).toBe('Odd');
+  });
+});
